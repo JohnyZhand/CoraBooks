@@ -10,6 +10,7 @@ This guide will help you deploy CoraBooks on Cloudflare Pages with Backblaze B2 
 ✅ **$5/TB** - Cheapest if you exceed free tier  
 ✅ **Simple Setup** - No complex configurations  
 ✅ **Reliable** - Enterprise-grade infrastructure  
+✅ **Private by Default** - Secure file storage without payment requirements  
 
 ## Prerequisites
 
@@ -30,7 +31,7 @@ This guide will help you deploy CoraBooks on Cloudflare Pages with Backblaze B2 
 2. Go to **Buckets** → **Create a Bucket**
 3. Choose settings:
    - **Bucket Name**: `corabooks-files` (must be globally unique, try adding random numbers if taken)
-   - **Files in Bucket are**: `Public` (for easier downloads)
+   - **Files in Bucket are**: `Private` (keeps your files secure and avoids payment requirements)
    - **Object Lock**: `Disabled`
 4. Click **Create a Bucket**
 
@@ -180,12 +181,13 @@ npm run dev:pages
 ### Upload Fails
 - Check B2 API keys are correct in Cloudflare settings
 - Verify bucket name matches exactly
-- Ensure bucket is set to "Public" for downloads
+- Ensure bucket has "Read and Write" permissions in API key settings
 
 ### Downloads Not Working  
-- Confirm bucket is public
 - Check that file exists in B2 console
 - Verify B2_BUCKET_NAME environment variable
+- Ensure API key has download permissions
+- Check Cloudflare Functions logs for authorization errors
 
 ### Functions Not Responding
 - Check Functions tab in Cloudflare Pages for error logs

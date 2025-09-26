@@ -43,13 +43,32 @@ export async function onRequest(context) {
 
     const authData = await authResponse.json();
 
-    // Step 2: Generate download URL
-    // B2 public download URL format: {downloadUrl}/file/{bucketName}/{fileName}
-    const downloadUrl = `${authData.downloadUrl}/file/${b2BucketName}/${fileInfo.b2FileName}`;
+    // Step 2: Generate authorized download URL for private bucket
+    const getDownloadAuthResponse = await fetch(`${authData.apiUrl}/b2api/v2/b2_get_download_authorization`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authData.authorizationToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        bucketId: env.B2_BUCKET_ID,
+        fileNamePrefix: fileInfo.b2FileName,
+        validDurationInSeconds: 3600 // 1 hour
+      })
+    });
 
-    // For private buckets, we'd need to generate an authorization token
-    // For now, assuming public bucket for simplicity
-    return Response.redirect(downloadUrl, 302);
+    if (!getDownloadAuthResponse.ok) {
+      // Fallback to basic download URL if authorization fails
+      const downloadUrl = `${authData.downloadUrl}/file/${b2BucketName}/${fileInfo.b2FileName}`;
+      return Response.redirect(downloadUrl, 302);
+    }
+
+    const downloadAuthData = await getDownloadAuthResponse.json();
+    
+    // Generate authorized download URL
+    const authorizedDownloadUrl = `${authData.downloadUrl}/file/${b2BucketName}/${fileInfo.b2FileName}?Authorization=${downloadAuthData.authorizationToken}`;
+    
+    return Response.redirect(authorizedDownloadUrl, 302);
 
   } catch (error) {
     console.error('Error downloading file:', error);
