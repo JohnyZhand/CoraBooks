@@ -48,11 +48,26 @@ export async function onRequest(context) {
     const b2ApplicationKey = env.B2_APPLICATION_KEY;
     const b2BucketId = env.B2_BUCKET_ID;
     
+    console.log('Environment variables check:', {
+      B2_APPLICATION_KEY_ID: b2KeyId ? `${b2KeyId.substring(0, 10)}...` : 'MISSING',
+      B2_APPLICATION_KEY: b2ApplicationKey ? `${b2ApplicationKey.substring(0, 10)}...` : 'MISSING',
+      B2_BUCKET_ID: b2BucketId ? `${b2BucketId.substring(0, 10)}...` : 'MISSING',
+      allEnvKeys: Object.keys(env)
+    });
+    
     if (!b2KeyId || !b2ApplicationKey || !b2BucketId) {
-      throw new Error('Backblaze B2 credentials not configured');
+      throw new Error(`Backblaze B2 credentials not configured. Missing: ${!b2KeyId ? 'KEY_ID ' : ''}${!b2ApplicationKey ? 'APP_KEY ' : ''}${!b2BucketId ? 'BUCKET_ID' : ''}`);
     }
 
     // Step 1: Authorize with B2
+    console.log('B2 Credentials check:', {
+      hasKeyId: !!b2KeyId,
+      hasAppKey: !!b2ApplicationKey,
+      hasBucketId: !!b2BucketId,
+      keyIdLength: b2KeyId?.length,
+      appKeyLength: b2ApplicationKey?.length
+    });
+
     const authResponse = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', {
       method: 'GET',
       headers: {
@@ -61,7 +76,9 @@ export async function onRequest(context) {
     });
 
     if (!authResponse.ok) {
-      throw new Error('Failed to authorize with Backblaze B2');
+      const errorText = await authResponse.text();
+      console.error('B2 Auth Error:', authResponse.status, errorText);
+      throw new Error(`Failed to authorize with Backblaze B2: ${authResponse.status} ${errorText}`);
     }
 
     const authData = await authResponse.json();
