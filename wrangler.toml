@@ -9,8 +9,15 @@ binding = "CORABOOKS_KV"
 id = "282de9a3368549c494f082ffe478efb6"
 preview_id = "282de9a3368549c494f082ffe478efb6"
 
-# Environment variables for Backblaze B2 (to be set in Cloudflare dashboard)
-# B2_APPLICATION_KEY_ID = "your-b2-key-id"
-# B2_APPLICATION_KEY = "your-b2-application-key" 
-# B2_BUCKET_ID = "your-b2-bucket-id"
-# B2_BUCKET_NAME = "your-b2-bucket-name"
+# Environment variables for Backblaze B2
+[env.production.vars]
+B2_APPLICATION_KEY_ID = "005377ddf5f41040000000001"
+B2_APPLICATION_KEY = "K005P7S++jG0dxNkYwmEJARRmurnui0I"
+B2_BUCKET_ID = "733717fdcd9f857f94910014"
+B2_BUCKET_NAME = "corabooks-files"
+
+[env.preview.vars]
+B2_APPLICATION_KEY_ID = "005377ddf5f41040000000001"
+B2_APPLICATION_KEY = "K005P7S++jG0dxNkYwmEJARRmurnui0I"
+B2_BUCKET_ID = "733717fdcd9f857f94910014"
+B2_BUCKET_NAME = "corabooks-files"
