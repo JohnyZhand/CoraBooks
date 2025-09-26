@@ -579,12 +579,15 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .form-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.5rem;
+    align-items: end;
 }
 
 .form-group {
@@ -604,10 +607,12 @@ body {
     background: var(--darker-bg);
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
-    padding: 0.75rem;
+    padding: 0.625rem 0.75rem;
     color: var(--text-primary);
     font-size: 0.875rem;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -619,7 +624,28 @@ body {
 
 .form-group textarea {
     resize: vertical;
-    min-height: 100px;
+    min-height: 80px;
+}
+
+.form-group input[type="file"] {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Better file input styling */
+.form-group input[type="file"]::file-selector-button {
+    background: var(--primary-purple);
+    border: none;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+    background: var(--secondary-purple);
 }
 
 .form-actions {
@@ -814,12 +840,28 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     }
 
+    .upload-form {
+        max-width: 100%;
+        padding: 0 0.5rem;
+    }
+
     .form-row {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .form-actions {
         flex-direction: column;
+    }
+
+    .form-group input[type="file"] {
+        font-size: 0.75rem;
+        padding: 0.4rem;
+    }
+
+    .form-group input[type="file"]::file-selector-button {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
     }
 
     .modal-content {
