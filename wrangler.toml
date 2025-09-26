@@ -3,15 +3,6 @@ name = "corabooks"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "public"
 
-# Build configuration
-[build]
-command = "npm run build"
-publish = "public"
-
-# Functions configuration
-[functions]
-directory = "functions"
-
 # KV namespaces for metadata storage
 [[kv_namespaces]]
 binding = "CORABOOKS_KV"

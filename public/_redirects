@@ -1,0 +1,2 @@
+# Cloudflare Pages redirects for API routes
+/api/* /api/:splat 200
