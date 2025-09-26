@@ -203,14 +203,14 @@ async function handleFileUpload(e) {
             throw new Error(error.message || 'Failed to get upload URL');
         }
 
-        const { uploadUrl, authorizationToken, fileName, fileId } = await uploadResponse.json();
+        const { uploadUrl, authorizationToken, fileName: b2FileName, fileId } = await uploadResponse.json();
         progressFill.style.width = '10%';
         progressPercentage.textContent = '10%';
 
         // Step 2: Upload directly to Backblaze B2 using presigned URL
         progressLabel.textContent = 'Uploading to Backblaze B2...';
         
-        const uploadResult = await uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, (progress) => {
+        const uploadResult = await uploadDirectToB2(uploadUrl, authorizationToken, b2FileName, file, (progress) => {
             // Scale progress from 10% to 90%
             const scaledProgress = 10 + (progress * 0.8);
             const percentage = Math.round(scaledProgress);
