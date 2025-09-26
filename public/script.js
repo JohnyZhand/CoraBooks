@@ -249,10 +249,42 @@ async function previewFile(fileId) {
                 <div style="font-size: 4rem; margin-bottom: 1rem;">📖</div>
                 <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">eBook File</h3>
                 <p>This is an ${fileExtension.includes('.epub') ? 'EPUB' : 'MOBI'} eBook file.</p>
-                <p>Download it to read with your favorite eBook reader app.</p>
-                <div style="margin-top: 1.5rem;">
-                    <p><strong>File size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p><strong>File size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                
+                <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.5rem; margin: 1.5rem 0; text-align: left;">
+                    <h4 style="color: var(--primary-purple); margin-bottom: 1rem; text-align: center;">📱 Need an eBook Reader?</h4>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <strong style="color: var(--text-primary);">📱 Android Users:</strong><br>
+                        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.books&hl=en_US" 
+                           target="_blank" 
+                           style="color: var(--primary-purple); text-decoration: none;">
+                           Google Play Books →
+                        </a>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <strong style="color: var(--text-primary);">🍎 iPhone/iPad Users:</strong><br>
+                        <a href="https://apps.apple.com/us/app/apple-books/id364709193" 
+                           target="_blank" 
+                           style="color: var(--primary-purple); text-decoration: none;">
+                           Apple Books →
+                        </a>
+                    </div>
+                    
+                    <div>
+                        <strong style="color: var(--text-primary);">💻 PC/Web Users:</strong><br>
+                        <a href="https://epub-reader.online/" 
+                           target="_blank" 
+                           style="color: var(--primary-purple); text-decoration: none;">
+                           Online EPUB Reader →
+                        </a>
+                    </div>
                 </div>
+                
+                <p style="font-size: 0.875rem; margin-top: 1rem;">
+                    Download the file and open it with any of the apps above to start reading!
+                </p>
             </div>
         `;
     } else {

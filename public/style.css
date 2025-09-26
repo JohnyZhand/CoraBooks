@@ -830,6 +830,17 @@ body {
     .feature-grid {
         grid-template-columns: 1fr;
     }
+
+    .reader-links {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .reader-link {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
 }
 
 /* Scrollbar */
@@ -848,6 +859,59 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--secondary-purple);
+}
+
+/* Info Banner for eBook Readers */
+.info-banner {
+    background: linear-gradient(135deg, var(--card-bg), rgba(139, 92, 246, 0.1));
+    border: 1px solid var(--primary-purple);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.info-content h4 {
+    color: var(--primary-purple);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.info-content p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.reader-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.reader-link {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--primary-purple);
+    color: var(--primary-purple);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reader-link:hover {
+    background: var(--primary-purple);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
 }
 
 /* Message notifications */
