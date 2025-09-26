@@ -156,6 +156,14 @@ async function handleFileUpload(e) {
         return;
     }
 
+    // Check file size (500MB limit)
+    const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+    if (file.size > maxSize) {
+        const fileSize = formatFileSize(file.size);
+        showNotification('error', 'File too large', `File size (${fileSize}) exceeds the 500MB limit. Please compress or split the file.`);
+        return;
+    }
+
     // Initialize progress tracking
     const progressContainer = document.getElementById('uploadProgress');
     const progressFill = progressContainer.querySelector('.progress-fill');

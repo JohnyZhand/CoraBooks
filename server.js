@@ -35,7 +35,7 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 50 * 1024 * 1024 // 50MB limit
+        fileSize: 500 * 1024 * 1024 // 500MB limit (for large textbooks and academic PDFs)
     },
     fileFilter: function (req, file, cb) {
         if (file.fieldname === 'coverImage') {
@@ -137,6 +137,22 @@ app.post('/api/upload', upload.fields([
 
     } catch (error) {
         console.error('Upload error:', error);
+        
+        // Handle specific multer errors
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({ 
+                message: 'File too large',
+                details: 'File size exceeds the 500MB limit. Please compress your file or split it into smaller parts.' 
+            });
+        }
+        
+        if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+            return res.status(400).json({ 
+                message: 'Unexpected file field',
+                details: 'Please check that you are uploading files in the correct fields.' 
+            });
+        }
+        
         res.status(500).json({ message: error.message || 'Upload failed' });
     }
 });
@@ -264,6 +280,37 @@ async function initializeApp() {
         console.error('❌ Error initializing app:', error);
     }
 }
+
+// Global error handler for multer and other errors
+app.use((error, req, res, next) => {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+            message: 'File too large',
+            details: 'File size exceeds the 500MB limit. Please compress your file or try uploading a smaller file.'
+        });
+    }
+    
+    if (error.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({
+            message: 'Too many files',
+            details: 'You can only upload one file at a time.'
+        });
+    }
+    
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+        return res.status(400).json({
+            message: 'Unexpected file field',
+            details: 'Invalid file upload format. Please try again.'
+        });
+    }
+    
+    // Generic error handler
+    console.error('Unhandled error:', error);
+    res.status(500).json({
+        message: 'Server error',
+        details: error.message || 'An unexpected error occurred'
+    });
+});
 
 // Start server
 app.listen(PORT, async () => {
