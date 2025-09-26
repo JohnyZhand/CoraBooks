@@ -46,9 +46,11 @@ const upload = multer({
                 cb(new Error('Cover image must be an image file'));
             }
         } else {
-            // Accept common document types
+            // Accept common document types including EPUB
             const allowedTypes = [
                 'application/pdf',
+                'application/epub+zip',
+                'application/x-mobipocket-ebook',
                 'application/msword',
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'text/plain',
@@ -61,7 +63,7 @@ const upload = multer({
             if (allowedTypes.includes(file.mimetype)) {
                 cb(null, true);
             } else {
-                cb(new Error('File type not supported. Please upload PDF, DOC, DOCX, TXT, PPT, PPTX, XLS, or XLSX files.'));
+                cb(new Error('File type not supported. Please upload PDF, EPUB, DOC, DOCX, TXT, PPT, PPTX, XLS, or XLSX files.'));
             }
         }
     }

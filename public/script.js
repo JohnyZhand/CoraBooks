@@ -127,6 +127,8 @@ function getFileIcon(filename) {
     const extension = filename.split('.').pop().toLowerCase();
     const icons = {
         'pdf': '📄',
+        'epub': '📖',
+        'mobi': '📚',
         'doc': '📝',
         'docx': '📝',
         'txt': '📃',
@@ -233,9 +235,26 @@ async function previewFile(fileId) {
     downloadFileName.textContent = file.originalName;
 
     // Check if it's a PDF for preview
-    if (file.originalName.toLowerCase().endsWith('.pdf')) {
+    const fileExtension = file.originalName.toLowerCase();
+    if (fileExtension.endsWith('.pdf')) {
         pdfViewer.src = `/uploads/files/${file.filename}`;
         pdfViewer.style.display = 'block';
+    } else if (fileExtension.endsWith('.epub') || fileExtension.endsWith('.mobi')) {
+        // For EPUB/MOBI files, show a message instead of trying to preview
+        pdfViewer.style.display = 'none';
+        pdfViewer.src = '';
+        const modalBody = document.querySelector('.modal-body');
+        modalBody.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">📖</div>
+                <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">eBook File</h3>
+                <p>This is an ${fileExtension.includes('.epub') ? 'EPUB' : 'MOBI'} eBook file.</p>
+                <p>Download it to read with your favorite eBook reader app.</p>
+                <div style="margin-top: 1.5rem;">
+                    <p><strong>File size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+            </div>
+        `;
     } else {
         pdfViewer.style.display = 'none';
         pdfViewer.src = '';
