@@ -65,13 +65,24 @@ export async function onRequest(context) {
       hasAppKey: !!b2ApplicationKey,
       hasBucketId: !!b2BucketId,
       keyIdLength: b2KeyId?.length,
-      appKeyLength: b2ApplicationKey?.length
+      appKeyLength: b2ApplicationKey?.length,
+      keyIdPrefix: b2KeyId ? b2KeyId.substring(0, 8) : 'MISSING',
+      appKeyPrefix: b2ApplicationKey ? b2ApplicationKey.substring(0, 8) : 'MISSING'
+    });
+
+    // Create the auth string
+    const authString = `${b2KeyId}:${b2ApplicationKey}`;
+    const base64Auth = btoa(authString);
+    console.log('Auth details:', {
+      authStringLength: authString.length,
+      base64AuthLength: base64Auth.length,
+      base64Prefix: base64Auth.substring(0, 20)
     });
 
     const authResponse = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', {
       method: 'GET',
       headers: {
-        'Authorization': `Basic ${btoa(`${b2KeyId}:${b2ApplicationKey}`)}`
+        'Authorization': `Basic ${base64Auth}`
       }
     });
 
