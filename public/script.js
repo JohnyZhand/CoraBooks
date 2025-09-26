@@ -140,7 +140,7 @@ function getFileIcon(filename) {
     return icons[extension] || '📁';
 }
 
-// Handle file upload
+// Handle file upload with progress tracking
 async function handleFileUpload(e) {
     e.preventDefault();
     
@@ -149,19 +149,36 @@ async function handleFileUpload(e) {
     const fileName = document.getElementById('fileName').value;
     const description = document.getElementById('description').value;
     const coverImage = document.getElementById('coverImage').files[0];
+    const file = fileInput.files[0];
 
-    if (!fileInput.files[0]) {
-        alert('Please select a file to upload');
+    if (!file) {
+        showNotification('error', 'Please select a file', 'You must choose a file to upload');
         return;
     }
 
-    // Add loading state to button
-    const submitBtn = e.target.querySelector('button[type="submit"]');
+    // Initialize progress tracking
+    const progressContainer = document.getElementById('uploadProgress');
+    const progressFill = progressContainer.querySelector('.progress-fill');
+    const progressPercentage = progressContainer.querySelector('.progress-percentage');
+    const progressLabel = progressContainer.querySelector('.progress-label');
+    const fileNameSpan = progressContainer.querySelector('.file-name');
+    const fileSizeSpan = progressContainer.querySelector('.file-size');
+    const submitBtn = document.getElementById('uploadBtn');
+
+    // Setup progress display
+    progressContainer.classList.remove('hidden');
+    fileNameSpan.textContent = file.name;
+    fileSizeSpan.textContent = formatFileSize(file.size);
+    progressLabel.textContent = 'Preparing upload...';
+    progressPercentage.textContent = '0%';
+    progressFill.style.width = '0%';
+
+    // Disable submit button
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Uploading...';
     submitBtn.disabled = true;
 
-    formData.append('file', fileInput.files[0]);
+    formData.append('file', file);
     formData.append('fileName', fileName);
     formData.append('description', description);
     
@@ -170,33 +187,92 @@ async function handleFileUpload(e) {
     }
 
     try {
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
+        // Create XMLHttpRequest for progress tracking
+        const response = await uploadWithProgress(formData, (progress) => {
+            const percentage = Math.round(progress);
+            progressFill.style.width = `${percentage}%`;
+            progressPercentage.textContent = `${percentage}%`;
+            progressLabel.textContent = percentage < 100 ? 'Uploading...' : 'Processing...';
         });
 
-        if (response.ok) {
-            const result = await response.json();
+        if (response.success) {
+            // Final progress state
+            progressFill.style.width = '100%';
+            progressPercentage.textContent = '100%';
+            progressLabel.textContent = 'Upload complete!';
             
-            // Show success message
-            showMessage('✓ Book uploaded successfully!', 'success');
+            // Show success notification
+            showNotification('success', 'Upload Successful!', `${fileName} has been uploaded successfully`);
             
-            // Reset form
+            // Hide progress after delay
+            setTimeout(() => {
+                progressContainer.classList.add('hidden');
+            }, 2000);
+            
+            // Reset form and reload files
             e.target.reset();
+            loadFiles();
             
             // Switch to browse section
             showSection('browse');
         } else {
-            const error = await response.json();
-            showMessage('✗ Upload failed: ' + error.message, 'error');
+            throw new Error(response.message || 'Upload failed');
         }
     } catch (error) {
         console.error('Upload error:', error);
-        showMessage('✗ Upload failed: Network error', 'error');
+        progressLabel.textContent = 'Upload failed';
+        progressFill.style.background = '#ef4444';
+        showNotification('error', 'Upload Failed', error.message || 'Network error occurred');
+        
+        // Hide progress after delay
+        setTimeout(() => {
+            progressContainer.classList.add('hidden');
+            progressFill.style.background = '';
+        }, 3000);
     } finally {
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
     }
+}
+
+// Upload with progress tracking using XMLHttpRequest
+function uploadWithProgress(formData, progressCallback) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const progress = (e.loaded / e.total) * 100;
+                progressCallback(progress);
+            }
+        });
+
+        xhr.addEventListener('load', () => {
+            try {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve({ success: true, data: response });
+                } else {
+                    const error = JSON.parse(xhr.responseText);
+                    resolve({ success: false, message: error.message });
+                }
+            } catch (e) {
+                reject(new Error('Invalid server response'));
+            }
+        });
+
+        xhr.addEventListener('error', () => {
+            reject(new Error('Network error'));
+        });
+
+        xhr.addEventListener('timeout', () => {
+            reject(new Error('Upload timeout'));
+        });
+
+        xhr.open('POST', '/api/upload');
+        xhr.timeout = 300000; // 5 minutes timeout
+        xhr.send(formData);
+    });
 }
 
 // Preview selected file before upload
@@ -343,6 +419,60 @@ function showMessage(message, type = 'info') {
             }
         }, 300);
     }, 4000);
+}
+
+// Modern notification system
+function showNotification(type, title, message) {
+    const container = document.getElementById('notificationContainer');
+    if (!container) return;
+
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    const icons = {
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️',
+        warning: '⚠️'
+    };
+
+    notification.innerHTML = `
+        <div class="notification-icon">${icons[type] || icons.info}</div>
+        <div class="notification-content">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        </div>
+        <button class="notification-close" onclick="removeNotification(this.parentElement)">×</button>
+    `;
+
+    container.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        removeNotification(notification);
+    }, 5000);
+}
+
+function removeNotification(notification) {
+    if (!notification || !notification.parentElement) return;
+    
+    notification.classList.add('removing');
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.parentElement.removeChild(notification);
+        }
+    }, 300);
+}
+
+// Format file size for display
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 // Display error message

@@ -654,6 +654,92 @@ body {
     margin-top: 1rem;
 }
 
+/* Upload Progress Bar */
+.upload-progress {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.upload-progress.hidden {
+    display: none;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.progress-label {
+    font-weight: 500;
+    color: var(--primary-purple);
+    font-size: 0.9rem;
+}
+
+.progress-percentage {
+    font-weight: 600;
+    color: var(--secondary-purple);
+    font-size: 0.9rem;
+}
+
+.progress-bar {
+    background: var(--darker-bg);
+    border-radius: 1rem;
+    height: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, var(--primary-purple), var(--secondary-purple));
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 1rem;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.file-name {
+    font-weight: 500;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-size {
+    color: var(--primary-purple);
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
     color: white;
@@ -824,6 +910,131 @@ body {
     justify-content: flex-end;
 }
 
+/* Notifications */
+.notification-container {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    pointer-events: none;
+}
+
+.notification {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    min-width: 300px;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translateX(100%);
+    opacity: 0;
+    animation: slideIn 0.3s ease forwards;
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.notification.success {
+    border-color: #10b981;
+}
+
+.notification.success::before {
+    background: #10b981;
+}
+
+.notification.error {
+    border-color: #ef4444;
+}
+
+.notification.error::before {
+    background: #ef4444;
+}
+
+.notification.info {
+    border-color: var(--primary-purple);
+}
+
+.notification.info::before {
+    background: var(--primary-purple);
+}
+
+.notification-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.notification-message {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.notification-close:hover {
+    background: var(--darker-bg);
+    color: var(--text-primary);
+}
+
+@keyframes slideIn {
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.notification.removing {
+    animation: slideOut 0.3s ease forwards;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .header .container {
@@ -897,6 +1108,31 @@ body {
         width: 100%;
         max-width: 280px;
         justify-content: center;
+    }
+
+    .notification-container {
+        top: 1rem;
+        right: 1rem;
+        left: 1rem;
+    }
+
+    .notification {
+        min-width: auto;
+        max-width: 100%;
+    }
+
+    .upload-progress {
+        padding: 1rem;
+        margin: 0.75rem 0;
+    }
+
+    .progress-details {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .file-name {
+        max-width: 100%;
     }
 }
 

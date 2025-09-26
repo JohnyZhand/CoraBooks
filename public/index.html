@@ -99,8 +99,23 @@
                                 <input type="file" id="coverImage" name="coverImage" accept="image/*">
                             </div>
                             
+                            <!-- Progress Bar -->
+                            <div id="uploadProgress" class="upload-progress hidden">
+                                <div class="progress-info">
+                                    <span class="progress-label">Uploading...</span>
+                                    <span class="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill"></div>
+                                </div>
+                                <div class="progress-details">
+                                    <span class="file-name"></span>
+                                    <span class="file-size"></span>
+                                </div>
+                            </div>
+
                             <div class="form-actions">
-                                <button type="submit" class="btn-primary">
+                                <button type="submit" class="btn-primary" id="uploadBtn">
                                     Upload Book
                                 </button>
                                 <button type="reset" class="btn-secondary">
@@ -130,6 +145,9 @@
                 </section>
             </div>
         </main>
+
+        <!-- Notification Container -->
+        <div id="notificationContainer" class="notification-container"></div>
 
         <!-- File Preview Modal -->
         <div id="previewModal" class="modal">
