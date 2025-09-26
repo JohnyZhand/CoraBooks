@@ -240,9 +240,35 @@ app.use((error, req, res, next) => {
     res.status(500).json({ message: 'Internal server error' });
 });
 
+// Initialize directories and data file
+async function initializeApp() {
+    try {
+        // Create required directories
+        await fs.mkdir('uploads', { recursive: true });
+        await fs.mkdir('uploads/files', { recursive: true });
+        await fs.mkdir('uploads/covers', { recursive: true });
+        await fs.mkdir('data', { recursive: true });
+        
+        // Initialize data file if it doesn't exist
+        const dataPath = path.join(__dirname, 'data', 'files.json');
+        try {
+            await fs.access(dataPath);
+        } catch {
+            // File doesn't exist, create it with empty array
+            await fs.writeFile(dataPath, JSON.stringify([], null, 2), 'utf8');
+            console.log('📝 Created empty files database');
+        }
+        
+        console.log('✅ All directories and files initialized');
+    } catch (error) {
+        console.error('❌ Error initializing app:', error);
+    }
+}
+
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log('🚀 CoraBooks Server Starting...');
+    await initializeApp();
     console.log(`📡 Server running on http://localhost:${PORT}`);
     console.log('💜 Terminal-style file repository loaded');
     console.log('📁 Upload directory: ./uploads/');
