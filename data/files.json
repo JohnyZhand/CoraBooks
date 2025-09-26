@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": "103f84c5-be06-4271-bf2a-a6e9fa486ba4",
+    "name": "Test Book",
+    "description": "This is a test book",
+    "originalName": "test.pdf",
+    "filename": "a7b74d9c-b421-415e-b157-54166b5e85ee.pdf",
+    "size": 27,
+    "mimetype": "application/pdf",
+    "coverImage": null,
+    "uploadDate": "2025-09-26T05:11:27.890Z"
+  }
+]

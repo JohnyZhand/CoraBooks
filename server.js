@@ -132,7 +132,7 @@ app.post('/api/upload', upload.fields([
         files.push(fileData);
         await saveFiles(files);
 
-        console.log(`File uploaded: ${fileName} (${uploadedFile.originalname})`);
+        console.log(`✅ File uploaded: ${fileName} (${uploadedFile.originalname})`);
         res.json({ message: 'File uploaded successfully', file: fileData });
 
     } catch (error) {
