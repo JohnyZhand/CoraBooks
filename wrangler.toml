@@ -1,0 +1,24 @@
+# Cloudflare Pages configuration with Backblaze B2
+name = "corabooks"
+compatibility_date = "2024-01-01"
+
+# Build configuration
+[build]
+command = "npm run build"
+publish = "public"
+
+# Functions configuration
+[functions]
+directory = "functions"
+
+# KV namespaces for metadata storage
+[[kv_namespaces]]
+binding = "CORABOOKS_KV"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+# Environment variables for Backblaze B2 (to be set in Cloudflare dashboard)
+# B2_APPLICATION_KEY_ID = "your-b2-key-id"
+# B2_APPLICATION_KEY = "your-b2-application-key" 
+# B2_BUCKET_ID = "your-b2-bucket-id"
+# B2_BUCKET_NAME = "your-b2-bucket-name"

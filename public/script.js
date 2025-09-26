@@ -101,14 +101,14 @@ function displayFiles(filesToShow) {
     filesList.innerHTML = filesToShow.map(file => `
         <div class="book-card" onclick="previewFile('${file.id}')">
             <div class="book-cover">
-                ${file.coverImage ? 
-                    `<img src="/uploads/covers/${file.coverImage}" alt="${file.name}">` : 
-                    `<div class="book-icon">${getFileIcon(file.originalName)}</div>`
-                }
+                <div class="book-icon">${getFileIcon(file.filename)}</div>
             </div>
             <div class="book-info">
-                <div class="book-title">${escapeHtml(file.name)}</div>
-                <div class="book-description">${escapeHtml(file.description)}</div>
+                <div class="book-title">${escapeHtml(file.filename)}</div>
+                <div class="book-meta">
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                    <span class="upload-date">${new Date(file.uploadedAt).toLocaleDateString()}</span>
+                </div>
                 <div class="book-actions">
                     <button class="btn btn-outline" onclick="event.stopPropagation(); previewFile('${file.id}')">
                         Preview
@@ -140,15 +140,13 @@ function getFileIcon(filename) {
     return icons[extension] || '📁';
 }
 
-// Handle file upload with progress tracking
+// Handle file upload with progress tracking (Cloudflare R2 direct upload)
 async function handleFileUpload(e) {
     e.preventDefault();
     
-    const formData = new FormData();
     const fileInput = document.getElementById('file');
     const fileName = document.getElementById('fileName').value;
     const description = document.getElementById('description').value;
-    const coverImage = document.getElementById('coverImage').files[0];
     const file = fileInput.files[0];
 
     if (!file) {
@@ -177,7 +175,7 @@ async function handleFileUpload(e) {
     progressContainer.classList.remove('hidden');
     fileNameSpan.textContent = file.name;
     fileSizeSpan.textContent = formatFileSize(file.size);
-    progressLabel.textContent = 'Preparing upload...';
+    progressLabel.textContent = 'Requesting upload URL...';
     progressPercentage.textContent = '0%';
     progressFill.style.width = '0%';
 
@@ -186,31 +184,48 @@ async function handleFileUpload(e) {
     submitBtn.textContent = 'Uploading...';
     submitBtn.disabled = true;
 
-    formData.append('file', file);
-    formData.append('fileName', fileName);
-    formData.append('description', description);
-    
-    if (coverImage) {
-        formData.append('coverImage', coverImage);
-    }
-
     try {
-        // Create XMLHttpRequest for progress tracking
-        const response = await uploadWithProgress(formData, (progress) => {
-            const percentage = Math.round(progress);
-            progressFill.style.width = `${percentage}%`;
-            progressPercentage.textContent = `${percentage}%`;
-            progressLabel.textContent = percentage < 100 ? 'Uploading...' : 'Processing...';
+        // Step 1: Get presigned upload URL from Cloudflare Function
+        progressLabel.textContent = 'Getting upload URL...';
+        const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filename: fileName || file.name,
+                size: file.size
+            })
         });
 
-        if (response.success) {
+        if (!uploadResponse.ok) {
+            const error = await uploadResponse.json();
+            throw new Error(error.message || 'Failed to get upload URL');
+        }
+
+        const { uploadUrl, authorizationToken, fileName, fileId } = await uploadResponse.json();
+        progressFill.style.width = '10%';
+        progressPercentage.textContent = '10%';
+
+        // Step 2: Upload directly to Backblaze B2 using presigned URL
+        progressLabel.textContent = 'Uploading to Backblaze B2...';
+        
+        const uploadResult = await uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, (progress) => {
+            // Scale progress from 10% to 90%
+            const scaledProgress = 10 + (progress * 0.8);
+            const percentage = Math.round(scaledProgress);
+            progressFill.style.width = `${percentage}%`;
+            progressPercentage.textContent = `${percentage}%`;
+        });
+
+        if (uploadResult.success) {
             // Final progress state
             progressFill.style.width = '100%';
             progressPercentage.textContent = '100%';
             progressLabel.textContent = 'Upload complete!';
             
             // Show success notification
-            showNotification('success', 'Upload Successful!', `${fileName} has been uploaded successfully`);
+            showNotification('success', 'Upload Successful!', `${fileName || file.name} has been uploaded successfully`);
             
             // Hide progress after delay
             setTimeout(() => {
@@ -224,7 +239,7 @@ async function handleFileUpload(e) {
             // Switch to browse section
             showSection('browse');
         } else {
-            throw new Error(response.message || 'Upload failed');
+            throw new Error(uploadResult.message || 'Upload to storage failed');
         }
     } catch (error) {
         console.error('Upload error:', error);
@@ -243,8 +258,8 @@ async function handleFileUpload(e) {
     }
 }
 
-// Upload with progress tracking using XMLHttpRequest
-function uploadWithProgress(formData, progressCallback) {
+// Direct upload to Backblaze B2 using presigned URL with progress tracking
+function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progressCallback) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -256,30 +271,34 @@ function uploadWithProgress(formData, progressCallback) {
         });
 
         xhr.addEventListener('load', () => {
-            try {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    const response = JSON.parse(xhr.responseText);
-                    resolve({ success: true, data: response });
-                } else {
-                    const error = JSON.parse(xhr.responseText);
-                    resolve({ success: false, message: error.message });
-                }
-            } catch (e) {
-                reject(new Error('Invalid server response'));
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve({ success: true });
+            } else {
+                resolve({ success: false, message: `Upload failed with status ${xhr.status}` });
             }
         });
 
         xhr.addEventListener('error', () => {
-            reject(new Error('Network error'));
+            reject(new Error('Network error during upload'));
         });
 
         xhr.addEventListener('timeout', () => {
             reject(new Error('Upload timeout'));
         });
 
-        xhr.open('POST', '/api/upload');
-        xhr.timeout = 300000; // 5 minutes timeout
-        xhr.send(formData);
+        xhr.open('POST', uploadUrl);
+        xhr.timeout = 600000; // 10 minutes timeout for large files
+        
+        // B2 specific headers
+        xhr.setRequestHeader('Authorization', authorizationToken);
+        xhr.setRequestHeader('X-Bz-File-Name', fileName);
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.setRequestHeader('Content-Length', file.size.toString());
+        
+        // Calculate SHA1 hash for B2 (optional but recommended)
+        xhr.setRequestHeader('X-Bz-Content-Sha1', 'unverified');
+        
+        xhr.send(file);
     });
 }
 
@@ -313,28 +332,37 @@ async function previewFile(fileId) {
     const modal = document.getElementById('previewModal');
     const previewFileName = document.getElementById('previewFileName');
     const downloadFileName = document.getElementById('downloadFileName');
-    const pdfViewer = document.getElementById('pdfViewer');
 
-    previewFileName.textContent = file.originalName;
-    downloadFileName.textContent = file.originalName;
+    previewFileName.textContent = file.filename;
+    downloadFileName.textContent = file.filename;
 
-    // Check if it's a PDF for preview
-    const fileExtension = file.originalName.toLowerCase();
+    // Show file info instead of trying to preview (since files are in R2)
+    const modalBody = document.querySelector('.modal-body');
+    const fileExtension = file.filename.toLowerCase();
+    
+    let fileTypeIcon = '📄';
+    let fileTypeName = 'Document';
+    
     if (fileExtension.endsWith('.pdf')) {
-        pdfViewer.src = `/uploads/files/${file.filename}`;
-        pdfViewer.style.display = 'block';
-    } else if (fileExtension.endsWith('.epub') || fileExtension.endsWith('.mobi')) {
-        // For EPUB/MOBI files, show a message instead of trying to preview
-        pdfViewer.style.display = 'none';
-        pdfViewer.src = '';
-        const modalBody = document.querySelector('.modal-body');
-        modalBody.innerHTML = `
-            <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">📖</div>
-                <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">eBook File</h3>
-                <p>This is an ${fileExtension.includes('.epub') ? 'EPUB' : 'MOBI'} eBook file.</p>
-                <p><strong>File size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                
+        fileTypeIcon = '📄';
+        fileTypeName = 'PDF Document';
+    } else if (fileExtension.endsWith('.epub')) {
+        fileTypeIcon = '📖';
+        fileTypeName = 'EPUB eBook';
+    } else if (fileExtension.endsWith('.mobi')) {
+        fileTypeIcon = '📚';
+        fileTypeName = 'MOBI eBook';
+    }
+    
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">${fileTypeIcon}</div>
+            <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">${fileTypeName}</h3>
+            <p><strong>File name:</strong> ${file.filename}</p>
+            <p><strong>File size:</strong> ${formatFileSize(file.size)}</p>
+            <p><strong>Uploaded:</strong> ${new Date(file.uploadedAt).toLocaleDateString()}</p>
+            
+            ${(fileExtension.includes('.epub') || fileExtension.includes('.mobi')) ? `
                 <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.5rem; margin: 1.5rem 0; text-align: left;">
                     <h4 style="color: var(--primary-purple); margin-bottom: 1rem; text-align: center;">📱 Need an eBook Reader?</h4>
                     
@@ -365,16 +393,13 @@ async function previewFile(fileId) {
                         </a>
                     </div>
                 </div>
-                
-                <p style="font-size: 0.875rem; margin-top: 1rem;">
-                    Download the file and open it with any of the apps above to start reading!
-                </p>
-            </div>
-        `;
-    } else {
-        pdfViewer.style.display = 'none';
-        pdfViewer.src = '';
-    }
+            ` : ''}
+            
+            <p style="font-size: 0.875rem; margin-top: 1rem;">
+                Click "Download" below to save this file to your device.
+            </p>
+        </div>
+    `;
 
     modal.style.display = 'block';
 }
