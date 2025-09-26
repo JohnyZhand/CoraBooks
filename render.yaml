@@ -1,0 +1,22 @@
+# Render.com configuration
+# This file tells Render how to deploy your app
+
+# Build Command: npm install
+# Start Command: npm start
+
+# Environment Variables to set in Render dashboard:
+# NODE_ENV=production
+# MAX_FILE_SIZE=104857600
+
+# Auto-deploy: Yes (deploys automatically when you push to GitHub)
+# Instance Type: Free tier (or Starter $7/month for better performance)
+
+services:
+  - type: web
+    name: corabooks
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production

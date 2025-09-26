@@ -1,0 +1,16 @@
+name: corabooks
+services:
+- name: web
+  source_dir: /
+  run_command: npm start
+  environment_slug: node-js
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 3000
+  routes:
+  - path: /
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: MAX_FILE_SIZE
+    value: "104857600"  # 100MB
