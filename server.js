@@ -35,7 +35,7 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 500 * 1024 * 1024 // 500MB limit (for large textbooks and academic PDFs)
+        fileSize: 2 * 1024 * 1024 * 1024 // 2GB limit (for large academic materials and multimedia)
     },
     fileFilter: function (req, file, cb) {
         if (file.fieldname === 'coverImage') {
@@ -142,7 +142,7 @@ app.post('/api/upload', upload.fields([
         if (error.code === 'LIMIT_FILE_SIZE') {
             return res.status(413).json({ 
                 message: 'File too large',
-                details: 'File size exceeds the 500MB limit. Please compress your file or split it into smaller parts.' 
+                details: 'File size exceeds the 2GB limit. Please compress your file or split it into smaller parts.' 
             });
         }
         
@@ -286,7 +286,7 @@ app.use((error, req, res, next) => {
     if (error.code === 'LIMIT_FILE_SIZE') {
         return res.status(413).json({
             message: 'File too large',
-            details: 'File size exceeds the 500MB limit. Please compress your file or try uploading a smaller file.'
+            details: 'File size exceeds the 2GB limit. Please compress your file or try uploading a smaller file.'
         });
     }
     

@@ -156,11 +156,11 @@ async function handleFileUpload(e) {
         return;
     }
 
-    // Check file size (500MB limit)
-    const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+    // Check file size (2GB limit)
+    const maxSize = 2 * 1024 * 1024 * 1024; // 2GB in bytes
     if (file.size > maxSize) {
         const fileSize = formatFileSize(file.size);
-        showNotification('error', 'File too large', `File size (${fileSize}) exceeds the 500MB limit. Please compress or split the file.`);
+        showNotification('error', 'File too large', `File size (${fileSize}) exceeds the 2GB limit. Please compress or split the file.`);
         return;
     }
 
