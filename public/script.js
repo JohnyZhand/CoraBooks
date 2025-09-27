@@ -1,11 +1,14 @@
 // Global variables
 let currentFile = null;
 let files = [];
+let adminKey = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     loadFiles();
     setupEventListeners();
+    // Admin: restore key if present
+    adminKey = localStorage.getItem('ADMIN_KEY') || null;
 });
 
 // Setup event listeners
@@ -56,6 +59,9 @@ function showSection(sectionName) {
     // Reload files if browsing
     if (sectionName === 'browse') {
         loadFiles();
+    }
+    if (sectionName === 'admin') {
+        initAdmin();
     }
 }
 
@@ -551,3 +557,95 @@ document.addEventListener('keydown', function(e) {
         console.log('💜 Purple terminal theme active');
     }
 });
+
+// ===== Admin dashboard logic =====
+async function initAdmin() {
+    const status = document.getElementById('adminStatus');
+    if (!status) return; // admin section not on this page
+    if (adminKey) {
+        const ok = await verifyAdminKey(adminKey);
+        status.textContent = ok ? 'Unlocked' : 'Locked (invalid key)';
+        if (ok) await loadAdminFiles();
+    } else {
+        status.textContent = 'Locked';
+    }
+    const loginBtn = document.getElementById('adminLoginBtn');
+    const logoutBtn = document.getElementById('adminLogoutBtn');
+    if (loginBtn) loginBtn.onclick = adminLogin;
+    if (logoutBtn) logoutBtn.onclick = adminLogout;
+}
+
+async function adminLogin() {
+    const input = document.getElementById('adminKeyInput');
+    const status = document.getElementById('adminStatus');
+    const key = (input?.value || '').trim();
+    if (!key) { if (status) status.textContent = 'Enter a key'; return; }
+    const ok = await verifyAdminKey(key);
+    if (ok) {
+        adminKey = key;
+        localStorage.setItem('ADMIN_KEY', key);
+        if (status) status.textContent = 'Unlocked';
+        await loadAdminFiles();
+    } else {
+        if (status) status.textContent = 'Invalid key';
+    }
+}
+
+function adminLogout() {
+    const status = document.getElementById('adminStatus');
+    adminKey = null;
+    localStorage.removeItem('ADMIN_KEY');
+    if (status) status.textContent = 'Locked';
+    const grid = document.getElementById('adminFilesGrid');
+    if (grid) grid.innerHTML = '';
+}
+
+async function verifyAdminKey(key) {
+    try {
+        const res = await fetch('/api/admin/status', { headers: { 'x-admin-key': key } });
+        if (!res.ok) return false;
+        const data = await res.json();
+        return !!data.ok;
+    } catch (e) { return false; }
+}
+
+async function loadAdminFiles() {
+    const grid = document.getElementById('adminFilesGrid');
+    if (!grid) return;
+    await loadFiles();
+    grid.innerHTML = '';
+    files.forEach(f => {
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.innerHTML = `
+            <div class="book-cover"><div class="book-icon">📁</div></div>
+            <div class="book-info">
+                <div class="book-title">${escapeHtml(f.filename)}</div>
+                <div class="book-meta">${formatFileSize(f.size)} • ${new Date(f.uploadedAt).toLocaleDateString()}</div>
+                <div class="book-actions">
+                    <button class="btn btn-outline" data-id="${f.id}">Preview</button>
+                    <button class="btn btn-purple" data-del-id="${f.id}">Delete</button>
+                </div>
+            </div>`;
+        card.querySelector('[data-del-id]')?.addEventListener('click', () => adminDelete(f.id));
+        card.querySelector('[data-id]')?.addEventListener('click', () => previewFile(f.id));
+        grid.appendChild(card);
+    });
+}
+
+async function adminDelete(id) {
+    if (!adminKey) { showNotification('error', 'Unauthorized', 'Unlock admin first'); return; }
+    if (!confirm('Delete this file?')) return;
+    try {
+        const res = await fetch(`/api/delete/${id}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } });
+        if (!res.ok) {
+            const t = await res.text();
+            showNotification('error', 'Delete failed', t || 'Unknown error');
+            return;
+        }
+        showNotification('success', 'Deleted', 'File removed');
+        await loadAdminFiles();
+    } catch (e) {
+        showNotification('error', 'Delete failed', e.message);
+    }
+}

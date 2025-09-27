@@ -25,6 +25,9 @@
                     <button class="nav-btn" onclick="showSection('upload')">
                         Upload Book
                     </button>
+                    <button class="nav-btn" onclick="showSection('admin')">
+                        Admin
+                    </button>
                     <button class="nav-btn" onclick="showSection('about')">
                         About
                     </button>
@@ -151,6 +154,31 @@
                                 <p>La pagina todavia esta en desarollo, so la colecion de libros quizas no es muy grande, pero con el tiempo espero poder seguir añadiendole mas. Si la pagina se tarda un poco en abrir eso es normal ya que el servidor donde se estan guardando los libros se va en "rest mode" cuando no hay nadie accediendo la pagina por much tiempo, para intentar reducir el costo de mantenimiento. Si aparece error 502 o una pagina que no es esta, intenta entrar varias veces en lo que el servidor vuelve a prenderse. Por ahora estoy intentando conseguir una alternaternativa de servidor para que el mismo se quede activo a todo momento, y tenga la misma capacidad para almazenar mucho libro y poder aumentar la velocidad de upload y download de los libros.</p>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                <!-- Admin Section -->
+                <section id="admin-section" class="section">
+                    <div class="section-header">
+                        <h2>Admin Dashboard</h2>
+                        <p>Enter your admin key to manage files.</p>
+                    </div>
+                    <div class="upload-card">
+                        <div class="form-row">
+                            <div class="form-group" style="flex:2;">
+                                <label for="adminKeyInput">Admin Key</label>
+                                <input type="password" id="adminKeyInput" placeholder="Enter admin key" />
+                            </div>
+                            <div class="form-group" style="align-self:flex-end;">
+                                <button id="adminLoginBtn" class="btn-primary" type="button">Unlock</button>
+                                <button id="adminLogoutBtn" class="btn-secondary" type="button">Lock</button>
+                            </div>
+                        </div>
+                        <div id="adminStatus" class="muted" style="margin-top:.25rem"></div>
+                    </div>
+
+                    <div class="books-grid" id="adminFilesGrid" style="margin-top:1rem">
+                        <!-- Admin file cards -->
                     </div>
                 </section>
             </div>

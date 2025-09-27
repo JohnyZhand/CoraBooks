@@ -10,7 +10,7 @@ export async function onRequest(context) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
       },
     });
   }
@@ -20,6 +20,16 @@ export async function onRequest(context) {
   }
 
   try {
+    // Simple header-based admin auth
+    const provided = request.headers.get('x-admin-key');
+    const expected = env.ADMIN_API_KEY;
+    if (!expected) {
+      return new Response(JSON.stringify({ message: 'Server admin key not set' }), { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+    }
+    if (!provided || provided !== expected) {
+      return new Response(JSON.stringify({ message: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+    }
+
     const fileId = params.id;
     
     // Get existing files from KV
