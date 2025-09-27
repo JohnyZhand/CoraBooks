@@ -37,7 +37,9 @@ export async function onRequest(context) {
     console.log('Proxying upload to B2:', {
       fileName: b2FileName,
       fileSize: file.size,
-      uploadUrl: uploadUrl.substring(0, 50) + '...'
+      fileType: file.type,
+      uploadUrl: uploadUrl.substring(0, 50) + '...',
+      hasAuthToken: !!authToken
     });
 
     // Create the upload request to B2
@@ -48,21 +50,41 @@ export async function onRequest(context) {
       'X-Bz-Content-Sha1': 'unverified'
     };
 
+    console.log('Upload headers:', {
+      'Authorization': authToken.substring(0, 20) + '...',
+      'X-Bz-File-Name': encodeURIComponent(b2FileName),
+      'Content-Type': file.type || 'b2/x-auto'
+    });
+
+    // Convert file to ArrayBuffer for upload to B2
+    const fileBuffer = await file.arrayBuffer();
+    
     // Upload to B2 through our server
     const b2Response = await fetch(uploadUrl, {
       method: 'POST',
       headers: uploadHeaders,
-      body: file.stream()
+      body: fileBuffer
     });
+
+    console.log('B2 Response status:', b2Response.status, b2Response.statusText);
 
     if (!b2Response.ok) {
       const errorText = await b2Response.text();
-      console.error('B2 upload failed:', b2Response.status, errorText);
+      console.error('B2 upload failed:', {
+        status: b2Response.status,
+        statusText: b2Response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(b2Response.headers.entries())
+      });
       throw new Error(`B2 upload failed: ${b2Response.status} ${errorText}`);
     }
 
     const b2Result = await b2Response.json();
-    console.log('B2 upload successful:', b2Result.fileName);
+    console.log('B2 upload successful:', {
+      fileName: b2Result.fileName,
+      fileId: b2Result.fileId,
+      size: b2Result.contentLength
+    });
 
     return new Response(JSON.stringify({
       success: true,
