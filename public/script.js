@@ -351,70 +351,27 @@ async function previewFile(fileId) {
     previewFileName.textContent = file.filename;
     downloadFileName.textContent = file.filename;
 
-    // Show file info instead of trying to preview (since files are in R2)
     const modalBody = document.querySelector('.modal-body');
     const fileExtension = file.filename.toLowerCase();
-    
-    let fileTypeIcon = '📄';
-    let fileTypeName = 'Document';
-    
+
     if (fileExtension.endsWith('.pdf')) {
-        fileTypeIcon = '📄';
-        fileTypeName = 'PDF Document';
-    } else if (fileExtension.endsWith('.epub')) {
-        fileTypeIcon = '📖';
-        fileTypeName = 'EPUB eBook';
-    } else if (fileExtension.endsWith('.mobi')) {
-        fileTypeIcon = '📚';
-        fileTypeName = 'MOBI eBook';
+        // Render inline PDF preview using the API (proxies auth so no prompt)
+        const src = `/api/download/${file.id}?inline=1`;
+        modalBody.innerHTML = `<embed id="pdfViewer" src="${src}" type="application/pdf" width="100%" height="500px">`;
+    } else {
+        let fileTypeIcon = '📄';
+        let fileTypeName = 'Document';
+        if (fileExtension.endsWith('.epub')) { fileTypeIcon = '📖'; fileTypeName = 'EPUB eBook'; }
+        else if (fileExtension.endsWith('.mobi')) { fileTypeIcon = '📚'; fileTypeName = 'MOBI eBook'; }
+        modalBody.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">${fileTypeIcon}</div>
+                <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">${fileTypeName}</h3>
+                <p><strong>File name:</strong> ${file.filename}</p>
+                <p><strong>File size:</strong> ${formatFileSize(file.size)}</p>
+                <p><strong>Uploaded:</strong> ${new Date(file.uploadedAt).toLocaleDateString()}</p>
+            </div>`;
     }
-    
-    modalBody.innerHTML = `
-        <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">${fileTypeIcon}</div>
-            <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">${fileTypeName}</h3>
-            <p><strong>File name:</strong> ${file.filename}</p>
-            <p><strong>File size:</strong> ${formatFileSize(file.size)}</p>
-            <p><strong>Uploaded:</strong> ${new Date(file.uploadedAt).toLocaleDateString()}</p>
-            
-            ${(fileExtension.includes('.epub') || fileExtension.includes('.mobi')) ? `
-                <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.5rem; margin: 1.5rem 0; text-align: left;">
-                    <h4 style="color: var(--primary-purple); margin-bottom: 1rem; text-align: center;">📱 Need an eBook Reader?</h4>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <strong style="color: var(--text-primary);">📱 Android Users:</strong><br>
-                        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.books&hl=en_US" 
-                           target="_blank" 
-                           style="color: var(--primary-purple); text-decoration: none;">
-                           Google Play Books →
-                        </a>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <strong style="color: var(--text-primary);">🍎 iPhone/iPad Users:</strong><br>
-                        <a href="https://apps.apple.com/us/app/apple-books/id364709193" 
-                           target="_blank" 
-                           style="color: var(--primary-purple); text-decoration: none;">
-                           Apple Books →
-                        </a>
-                    </div>
-                    
-                    <div>
-                        <strong style="color: var(--text-primary);">💻 PC/Web Users:</strong><br>
-                        <a href="https://epub-reader.online/" 
-                           target="_blank" 
-                           style="color: var(--primary-purple); text-decoration: none;">
-                           Online EPUB Reader →
-                        </a>
-                    </div>
-                </div>
-            ` : ''}
-            
-            <p style="font-size: 0.875rem; margin-top: 1rem;">
-                Click "Download" below to save this file to your device.
-            </p>
-        </div>
-    `;
 
     modal.style.display = 'block';
 }
