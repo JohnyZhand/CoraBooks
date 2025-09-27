@@ -95,15 +95,46 @@ export async function onRequest(context) {
   // "Bad character in percent-encoded string" errors.
   const encodedB2Name = encodeURIComponent(fileInfo.b2FileName);
 
-  // Optionally set a friendly download filename via b2ContentDisposition
-  // so the saved file name matches what users see on the site.
+  // Friendly display name; choose disposition based on query param
+  const url = new URL(request.url);
+  const inline = url.searchParams.get('inline') === '1' || url.searchParams.get('disposition') === 'inline';
   const friendlyName = fileInfo.filename || fileInfo.b2FileName;
-  const contentDisposition = encodeURIComponent(`attachment; filename="${friendlyName}"`);
+  const dispositionType = inline ? 'inline' : 'attachment';
+  const contentDisposition = encodeURIComponent(`${dispositionType}; filename=\"${friendlyName}\"`);
 
-  // Generate authorized download URL
-  const authorizedDownloadUrl = `${authData.downloadUrl}/file/${b2BucketName}/${encodedB2Name}?Authorization=${downloadAuthData.authorizationToken}&b2ContentDisposition=${contentDisposition}`;
+    // Proxy the file from B2 with Authorization header so browsers don't prompt for credentials.
+    const range = request.headers.get('Range');
+    const b2Resp = await fetch(`${authData.downloadUrl}/file/${b2BucketName}/${encodedB2Name}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': downloadAuthData.authorizationToken,
+        ...(range ? { 'Range': range } : {}),
+      }
+    });
 
-    return Response.redirect(authorizedDownloadUrl, 302);
+    if (!b2Resp.ok && b2Resp.status !== 206) {
+      const txt = await b2Resp.text();
+      console.error('B2 download failed', b2Resp.status, txt);
+      return new Response('Failed to fetch file from storage', { status: 502, headers: corsHeaders() });
+    }
+
+    // Prepare response headers
+    const headers = new Headers();
+    headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Accept-Ranges', b2Resp.headers.get('Accept-Ranges') || 'bytes');
+    const ct = b2Resp.headers.get('Content-Type') || 'application/octet-stream';
+    headers.set('Content-Type', ct);
+    const cr = b2Resp.headers.get('Content-Range');
+    if (cr) headers.set('Content-Range', cr);
+    const len = b2Resp.headers.get('Content-Length');
+    if (len) headers.set('Content-Length', len);
+    headers.set('Content-Disposition', decodeURIComponent(contentDisposition));
+    const etag = b2Resp.headers.get('ETag');
+    if (etag) headers.set('ETag', etag);
+    const lm = b2Resp.headers.get('Last-Modified');
+    if (lm) headers.set('Last-Modified', lm);
+
+    return new Response(b2Resp.body, { status: b2Resp.status, headers });
 
   } catch (error) {
     console.error('Error downloading file:', error);

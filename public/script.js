@@ -107,7 +107,7 @@ function displayFiles(filesToShow) {
     filesList.innerHTML = filesToShow.map(file => `
         <div class="book-card" onclick="previewFile('${file.id}')">
             <div class="book-cover">
-                <div class="book-icon">${getFileIcon(file.filename)}</div>
+                ${file.coverUrl ? `<img src="${file.coverUrl}" alt="${escapeHtml(file.filename)} cover" onerror="this.remove()" />` : `<div class="book-icon">${getFileIcon(file.filename)}</div>`}
             </div>
             <div class="book-info">
                 <div class="book-title">${escapeHtml(file.filename)}</div>
