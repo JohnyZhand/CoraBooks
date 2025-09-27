@@ -88,11 +88,21 @@ export async function onRequest(context) {
       return new Response('Failed to authorize download', { status: 500 });
     }
 
-    const downloadAuthData = await getDownloadAuthResponse.json();
-    
-    // Generate authorized download URL
-    const authorizedDownloadUrl = `${authData.downloadUrl}/file/${b2BucketName}/${fileInfo.b2FileName}?Authorization=${downloadAuthData.authorizationToken}`;
-    
+  const downloadAuthData = await getDownloadAuthResponse.json();
+
+  // IMPORTANT: The B2 file name in the URL path MUST be percent-encoded,
+  // including commas and other special characters, otherwise B2 returns
+  // "Bad character in percent-encoded string" errors.
+  const encodedB2Name = encodeURIComponent(fileInfo.b2FileName);
+
+  // Optionally set a friendly download filename via b2ContentDisposition
+  // so the saved file name matches what users see on the site.
+  const friendlyName = fileInfo.filename || fileInfo.b2FileName;
+  const contentDisposition = encodeURIComponent(`attachment; filename="${friendlyName}"`);
+
+  // Generate authorized download URL
+  const authorizedDownloadUrl = `${authData.downloadUrl}/file/${b2BucketName}/${encodedB2Name}?Authorization=${downloadAuthData.authorizationToken}&b2ContentDisposition=${contentDisposition}`;
+
     return Response.redirect(authorizedDownloadUrl, 302);
 
   } catch (error) {

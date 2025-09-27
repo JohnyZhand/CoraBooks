@@ -200,6 +200,8 @@ async function handleFileUpload(e) {
             },
             body: JSON.stringify({
                 filename: fileName || file.name,
+                originalFilename: file.name,
+                contentType: file.type || 'application/octet-stream',
                 size: file.size
             })
         });
@@ -426,12 +428,12 @@ async function downloadFile(fileId) {
         // Create download link
         const link = document.createElement('a');
         link.href = `/api/download/${file.id}`;
-        link.download = file.originalName;
+        // Fallback to stored filename if originalName is absent
+        link.download = file.originalName || file.filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
-        showMessage(`✓ Downloading ${file.originalName}...`, 'success');
+        showMessage(`✓ Downloading ${file.originalName || file.filename}...`, 'success');
     } catch (error) {
         console.error('Download error:', error);
         showMessage('✗ Download failed', 'error');

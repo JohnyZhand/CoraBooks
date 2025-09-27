@@ -22,7 +22,7 @@ export async function onRequest(context) {
   }
 
   try {
-    const { filename, size } = await request.json();
+  const { filename, originalFilename, contentType, size } = await request.json();
     
     // Validate file size (2GB limit)
     const maxSize = 2 * 1024 * 1024 * 1024; // 2GB in bytes
@@ -40,8 +40,11 @@ export async function onRequest(context) {
 
     // Generate unique filename
     const fileId = uuidv4();
-    const fileExtension = filename.split('.').pop();
-    const uniqueFilename = `${fileId}.${fileExtension}`;
+  // Determine extension from the user's actual file name to avoid encoding issues
+  const sourceName = (originalFilename || filename || '').toString();
+  const dotIdx = sourceName.lastIndexOf('.');
+  const fileExtension = dotIdx > -1 ? sourceName.substring(dotIdx + 1) : 'bin';
+  const uniqueFilename = `${fileId}.${fileExtension}`;
     
     // Get Backblaze B2 credentials from environment
     const b2KeyId = env.B2_APPLICATION_KEY_ID;
@@ -115,7 +118,9 @@ export async function onRequest(context) {
     // Store file metadata
     const fileMetadata = {
       id: fileId,
-      filename: filename,
+      filename: filename, // display name from the form
+      originalName: originalFilename || filename,
+      contentType: contentType || 'application/octet-stream',
       size: size,
       uploadedAt: new Date().toISOString(),
       b2FileName: uniqueFilename,
