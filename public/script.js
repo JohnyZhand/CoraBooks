@@ -271,14 +271,22 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
         });
 
         xhr.addEventListener('load', () => {
+            console.log('B2 Upload response:', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                responseText: xhr.responseText
+            });
+            
             if (xhr.status >= 200 && xhr.status < 300) {
                 resolve({ success: true });
             } else {
-                resolve({ success: false, message: `Upload failed with status ${xhr.status}` });
+                console.error('B2 Upload failed:', xhr.status, xhr.statusText, xhr.responseText);
+                resolve({ success: false, message: `Upload failed with status ${xhr.status}: ${xhr.statusText}` });
             }
         });
 
-        xhr.addEventListener('error', () => {
+        xhr.addEventListener('error', (e) => {
+            console.error('Network error during B2 upload:', e);
             reject(new Error('Network error during upload'));
         });
 
@@ -289,14 +297,13 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
         xhr.open('POST', uploadUrl);
         xhr.timeout = 600000; // 10 minutes timeout for large files
         
-        // B2 specific headers
+        // B2 specific headers - order and format matter
         xhr.setRequestHeader('Authorization', authorizationToken);
-        xhr.setRequestHeader('X-Bz-File-Name', fileName);
-        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-        xhr.setRequestHeader('Content-Length', file.size.toString());
-        
-        // Calculate SHA1 hash for B2 (optional but recommended)
+        xhr.setRequestHeader('X-Bz-File-Name', encodeURIComponent(fileName));
+        xhr.setRequestHeader('Content-Type', file.type || 'b2/x-auto');
         xhr.setRequestHeader('X-Bz-Content-Sha1', 'unverified');
+        
+        // Don't set Content-Length manually - browser will handle it
         
         xhr.send(file);
     });
