@@ -258,7 +258,7 @@ async function handleFileUpload(e) {
     }
 }
 
-// Direct upload to Backblaze B2 using presigned URL with progress tracking
+// Upload via our server proxy to avoid CORS issues
 function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progressCallback) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -271,22 +271,27 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
         });
 
         xhr.addEventListener('load', () => {
-            console.log('B2 Upload response:', {
+            console.log('Proxy upload response:', {
                 status: xhr.status,
                 statusText: xhr.statusText,
                 responseText: xhr.responseText
             });
             
             if (xhr.status >= 200 && xhr.status < 300) {
-                resolve({ success: true });
+                try {
+                    const result = JSON.parse(xhr.responseText);
+                    resolve({ success: result.success, message: result.message });
+                } catch (e) {
+                    resolve({ success: true });
+                }
             } else {
-                console.error('B2 Upload failed:', xhr.status, xhr.statusText, xhr.responseText);
+                console.error('Proxy upload failed:', xhr.status, xhr.statusText, xhr.responseText);
                 resolve({ success: false, message: `Upload failed with status ${xhr.status}: ${xhr.statusText}` });
             }
         });
 
         xhr.addEventListener('error', (e) => {
-            console.error('Network error during B2 upload:', e);
+            console.error('Network error during proxy upload:', e);
             reject(new Error('Network error during upload'));
         });
 
@@ -294,18 +299,18 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
             reject(new Error('Upload timeout'));
         });
 
-        xhr.open('POST', uploadUrl);
+        // Create FormData for our proxy endpoint
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', file.name);
+        formData.append('b2FileName', fileName);
+        formData.append('uploadUrl', uploadUrl);
+        formData.append('authToken', authorizationToken);
+
+        xhr.open('POST', '/api/upload-direct');
         xhr.timeout = 600000; // 10 minutes timeout for large files
         
-        // B2 specific headers - order and format matter
-        xhr.setRequestHeader('Authorization', authorizationToken);
-        xhr.setRequestHeader('X-Bz-File-Name', encodeURIComponent(fileName));
-        xhr.setRequestHeader('Content-Type', file.type || 'b2/x-auto');
-        xhr.setRequestHeader('X-Bz-Content-Sha1', 'unverified');
-        
-        // Don't set Content-Length manually - browser will handle it
-        
-        xhr.send(file);
+        xhr.send(formData);
     });
 }
 
