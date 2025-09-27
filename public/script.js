@@ -297,11 +297,12 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
         xhr.open('POST', uploadUrl);
         xhr.timeout = 60 * 60 * 1000; // 60 minutes for very large files
 
-        // B2 headers (order and values matter)
+    // B2 headers (order and values matter)
         xhr.setRequestHeader('Authorization', authorizationToken);
         xhr.setRequestHeader('X-Bz-File-Name', encodeURIComponent(fileName));
         xhr.setRequestHeader('Content-Type', file.type || 'b2/x-auto');
-        xhr.setRequestHeader('X-Bz-Content-Sha1', 'unverified');
+    // Use do_not_verify to skip hashing in the browser (avoids heavy SHA-1 for large files)
+    xhr.setRequestHeader('X-Bz-Content-Sha1', 'do_not_verify');
         // Do NOT set Content-Length: browser sets it automatically
 
         xhr.send(file);
