@@ -258,7 +258,7 @@ async function handleFileUpload(e) {
     }
 }
 
-// Upload via our server proxy to avoid CORS issues
+// Direct upload to Backblaze B2 using the uploadUrl (requires proper B2 CORS rules)
 function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progressCallback) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -271,27 +271,22 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
         });
 
         xhr.addEventListener('load', () => {
-            console.log('Proxy upload response:', {
+            console.log('B2 Upload response:', {
                 status: xhr.status,
                 statusText: xhr.statusText,
                 responseText: xhr.responseText
             });
-            
+
             if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                    const result = JSON.parse(xhr.responseText);
-                    resolve({ success: result.success, message: result.message });
-                } catch (e) {
-                    resolve({ success: true });
-                }
+                resolve({ success: true });
             } else {
-                console.error('Proxy upload failed:', xhr.status, xhr.statusText, xhr.responseText);
+                console.error('B2 Upload failed:', xhr.status, xhr.statusText, xhr.responseText);
                 resolve({ success: false, message: `Upload failed with status ${xhr.status}: ${xhr.statusText}` });
             }
         });
 
         xhr.addEventListener('error', (e) => {
-            console.error('Network error during proxy upload:', e);
+            console.error('Network error during B2 upload:', e);
             reject(new Error('Network error during upload'));
         });
 
@@ -299,18 +294,17 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
             reject(new Error('Upload timeout'));
         });
 
-        // Create FormData for our proxy endpoint
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('fileName', file.name);
-        formData.append('b2FileName', fileName);
-        formData.append('uploadUrl', uploadUrl);
-        formData.append('authToken', authorizationToken);
+        xhr.open('POST', uploadUrl);
+        xhr.timeout = 60 * 60 * 1000; // 60 minutes for very large files
 
-        xhr.open('POST', '/api/upload-direct');
-        xhr.timeout = 600000; // 10 minutes timeout for large files
-        
-        xhr.send(formData);
+        // B2 headers (order and values matter)
+        xhr.setRequestHeader('Authorization', authorizationToken);
+        xhr.setRequestHeader('X-Bz-File-Name', encodeURIComponent(fileName));
+        xhr.setRequestHeader('Content-Type', file.type || 'b2/x-auto');
+        xhr.setRequestHeader('X-Bz-Content-Sha1', 'unverified');
+        // Do NOT set Content-Length: browser sets it automatically
+
+        xhr.send(file);
     });
 }
 
