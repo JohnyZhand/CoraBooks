@@ -43,7 +43,33 @@ export async function onRequest(context) {
 
     const authData = await authResponse.json();
 
-    // Step 2: Generate authorized download URL for private bucket
+    // Step 2: Get file info by name to ensure it exists
+    const getFileInfoResponse = await fetch(`${authData.apiUrl}/b2api/v2/b2_list_file_names`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authData.authorizationToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        bucketId: env.B2_BUCKET_ID,
+        startFileName: fileInfo.b2FileName,
+        maxFileCount: 1
+      })
+    });
+
+    if (!getFileInfoResponse.ok) {
+      console.error('Failed to get file info from B2');
+      return new Response('File not found in storage', { status: 404 });
+    }
+
+    const fileListData = await getFileInfoResponse.json();
+    
+    if (!fileListData.files || fileListData.files.length === 0 || fileListData.files[0].fileName !== fileInfo.b2FileName) {
+      console.error('File not found in B2:', fileInfo.b2FileName);
+      return new Response('File not found in storage', { status: 404 });
+    }
+
+    // Step 3: Generate download authorization for private bucket
     const getDownloadAuthResponse = await fetch(`${authData.apiUrl}/b2api/v2/b2_get_download_authorization`, {
       method: 'POST',
       headers: {
@@ -58,9 +84,8 @@ export async function onRequest(context) {
     });
 
     if (!getDownloadAuthResponse.ok) {
-      // Fallback to basic download URL if authorization fails
-      const downloadUrl = `${authData.downloadUrl}/file/${b2BucketName}/${fileInfo.b2FileName}`;
-      return Response.redirect(downloadUrl, 302);
+      console.error('Failed to get download authorization');
+      return new Response('Failed to authorize download', { status: 500 });
     }
 
     const downloadAuthData = await getDownloadAuthResponse.json();

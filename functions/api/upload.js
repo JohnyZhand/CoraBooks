@@ -126,6 +126,8 @@ export async function onRequest(context) {
     existingFiles.push(fileMetadata);
     await env.CORABOOKS_KV.put('files', JSON.stringify(existingFiles));
 
+    console.log('Upload URL generated successfully for:', uniqueFilename);
+
     return new Response(JSON.stringify({
       uploadUrl: uploadData.uploadUrl,
       authorizationToken: uploadData.authorizationToken,
@@ -137,6 +139,8 @@ export async function onRequest(context) {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
 
