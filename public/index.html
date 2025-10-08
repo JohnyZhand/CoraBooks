@@ -172,6 +172,19 @@
                             </div>
                         </div>
                         <div id="adminStatus" class="muted" style="margin-top:.25rem"></div>
+                        <div id="adminCleanupControls" class="hidden">
+                            <hr style="border-color: var(--border-color); margin: 1rem 0; opacity:.4;" />
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cleanupThreshold">Cleanup threshold (hours)</label>
+                                    <input type="number" id="cleanupThreshold" min="1" step="1" value="6" />
+                                </div>
+                                <div class="form-group" style="align-self:flex-end;">
+                                    <button id="adminCleanupBtn" class="btn-outline" type="button">Cleanup Pending</button>
+                                </div>
+                            </div>
+                            <div id="adminCleanupResult" class="muted" style="margin-top:.25rem"></div>
+                        </div>
                     </div>
 
                     <div class="books-grid" id="adminFilesGrid" style="margin-top:1rem">

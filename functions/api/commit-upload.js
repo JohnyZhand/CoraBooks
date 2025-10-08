@@ -28,9 +28,33 @@ export async function onRequest(context) {
       }, body: JSON.stringify({ bucketId: env.B2_BUCKET_ID, startFileName: file.b2FileName, maxFileCount: 1 })
     });
     const listData = await listRes.json();
-    const exists = listRes.ok && listData.files?.[0]?.fileName === file.b2FileName;
-    if (!exists) return json({ ok: false, message: 'File not present in storage yet' }, 409);
+    const listed = listRes.ok ? (listData.files?.[0] || null) : null;
+    const exists = !!listed && listed.fileName === file.b2FileName;
 
+    // If the file does not exist in B2 at commit time, treat it as a failed upload and delete metadata
+    if (!exists) {
+      files.splice(idx, 1);
+      await env.CORABOOKS_KV.put('files', JSON.stringify(files));
+      return json({ ok: false, cleaned: true, reason: 'not_found' }, 410);
+    }
+
+    // Verify size matches what the client reported
+    const b2Size = listed.contentLength ?? listed.size; // different B2 APIs may return either
+    if (typeof b2Size === 'number' && typeof file.size === 'number' && b2Size !== file.size) {
+      // Delete the incorrect file from B2 and remove metadata
+      try {
+        await fetch(`${auth.apiUrl}/b2api/v2/b2_delete_file_version`, {
+          method: 'POST',
+          headers: { 'Authorization': auth.authorizationToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileId: listed.fileId, fileName: listed.fileName })
+        });
+      } catch (e) { /* best-effort */ }
+      files.splice(idx, 1);
+      await env.CORABOOKS_KV.put('files', JSON.stringify(files));
+      return json({ ok: false, cleaned: true, reason: 'size_mismatch' }, 422);
+    }
+
+    // Looks good; mark ready
     files[idx] = { ...file, ready: true };
     await env.CORABOOKS_KV.put('files', JSON.stringify(files));
     return json({ ok: true });

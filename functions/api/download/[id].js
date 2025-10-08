@@ -2,7 +2,7 @@
 // Replaces GET /api/download/:id endpoint
 
 export async function onRequest(context) {
-  const { env, request, params } = context;
+  const { env, request, params, caches } = context;
   
   try {
     const fileId = params.id;
@@ -69,7 +69,7 @@ export async function onRequest(context) {
       return new Response('File not found in storage', { status: 404 });
     }
 
-    // Step 3: Generate download authorization for private bucket
+  // Step 3: Generate download authorization for private bucket
     const getDownloadAuthResponse = await fetch(`${authData.apiUrl}/b2api/v2/b2_get_download_authorization`, {
       method: 'POST',
       headers: {
@@ -115,6 +115,23 @@ export async function onRequest(context) {
 
     // Proxy the file from B2 with Authorization header so browsers don't prompt for credentials.
     const range = request.headers.get('Range');
+
+    // Try cache for full (non-range) responses only
+    const shouldBypassCache = !!range;
+    const cache = caches?.default;
+    const cacheKeyUrl = new URL(request.url);
+    cacheKeyUrl.pathname = `/__download-cache/${fileInfo.id}`;
+    cacheKeyUrl.search = `?v=${encodeURIComponent(fileInfo.b2FileName)}&inline=${inline ? '1' : '0'}`;
+    const cacheKey = new Request(cacheKeyUrl.toString(), { method: 'GET' });
+
+    if (!shouldBypassCache && cache) {
+      const cached = await cache.match(cacheKey);
+      if (cached) {
+        // Return cached response early
+        return cached;
+      }
+    }
+
     const b2Resp = await fetch(`${authData.downloadUrl}/file/${b2BucketName}/${encodedB2Name}`, {
       method: 'GET',
       headers: {
@@ -145,7 +162,25 @@ export async function onRequest(context) {
     const lm = b2Resp.headers.get('Last-Modified');
     if (lm) headers.set('Last-Modified', lm);
 
-    return new Response(b2Resp.body, { status: b2Resp.status, headers });
+    const response = new Response(b2Resp.body, { status: b2Resp.status, headers });
+
+    // Edge caching: store only successful full responses within size threshold
+    try {
+      if (!shouldBypassCache && cache && b2Resp.status === 200) {
+        const maxCacheBytes = 512 * 1024 * 1024; // 512MB Cloudflare cache_SAFE threshold
+        const sz = Number(len || fileInfo.size || 0);
+        if (Number.isFinite(sz) && sz > 0 && sz <= maxCacheBytes) {
+          // Set client cache headers to encourage reuse
+          headers.set('Cache-Control', 'public, max-age=3600, immutable');
+          // Put into edge cache (non-blocking best-effort)
+          context.waitUntil(cache.put(cacheKey, response.clone()));
+        }
+      }
+    } catch (e) {
+      // Best-effort caching; ignore errors
+    }
+
+    return response;
 
   } catch (error) {
     console.error('Error downloading file:', error);

@@ -1,6 +1,6 @@
 // Streams the cover image from B2 if it exists
 export async function onRequest(context) {
-  const { env, params } = context;
+  const { env, params, caches } = context;
   const fileId = params.id;
   try {
     const files = await env.CORABOOKS_KV.get('files', 'json') || [];
@@ -19,6 +19,15 @@ export async function onRequest(context) {
     if (!authResp.ok) return new Response('Auth failed', { status: 502 });
     const auth = await authResp.json();
 
+    // Try edge cache first
+    const cache = caches?.default;
+    const cacheKeyUrl = new URL(`https://cache.internal/cover/${encodeURIComponent(fileId)}?v=${encodeURIComponent(f.coverB2Name)}`);
+    const cacheKey = new Request(cacheKeyUrl.toString(), { method: 'GET' });
+    if (cache) {
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
+    }
+
     const b2Resp = await fetch(`${auth.downloadUrl}/file/${b2BucketName}/${encodeURIComponent(f.coverB2Name)}`, {
       headers: { 'Authorization': auth.authorizationToken }
     });
@@ -27,9 +36,11 @@ export async function onRequest(context) {
     const headers = new Headers();
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Content-Type', f.coverContentType || b2Resp.headers.get('Content-Type') || 'image/jpeg');
-    const cc = b2Resp.headers.get('Cache-Control') || 'public, max-age=3600';
+    const cc = b2Resp.headers.get('Cache-Control') || 'public, max-age=86400, immutable';
     headers.set('Cache-Control', cc);
-    return new Response(b2Resp.body, { status: 200, headers });
+    const resp = new Response(b2Resp.body, { status: 200, headers });
+    try { if (cache) context.waitUntil(cache.put(cacheKey, resp.clone())); } catch (e) {}
+    return resp;
   } catch (e) {
     return new Response('Error', { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
   }

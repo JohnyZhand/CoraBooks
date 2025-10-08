@@ -306,6 +306,8 @@ async function handleFileUpload(e) {
 }
 
 // Direct upload to Backblaze B2 using the uploadUrl (requires proper B2 CORS rules)
+// Note: On mobile networks, large uploads can be slow or flaky. Consider slicing to B2 Large File API
+// for resumable/chunked uploads if we need better reliability for >100MB files.
 function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progressCallback) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -587,23 +589,29 @@ document.addEventListener('keydown', function(e) {
 // ===== Admin dashboard logic =====
 async function initAdmin() {
     const status = document.getElementById('adminStatus');
+    const controls = document.getElementById('adminCleanupControls');
     if (!status) return; // admin section not on this page
     if (adminKey) {
         const ok = await verifyAdminKey(adminKey);
         status.textContent = ok ? 'Unlocked' : 'Locked (invalid key)';
+        if (controls) controls.classList.toggle('hidden', !ok);
         if (ok) await loadAdminFiles();
     } else {
         status.textContent = 'Locked';
+        if (controls) controls.classList.add('hidden');
     }
     const loginBtn = document.getElementById('adminLoginBtn');
     const logoutBtn = document.getElementById('adminLogoutBtn');
+    const cleanupBtn = document.getElementById('adminCleanupBtn');
     if (loginBtn) loginBtn.onclick = adminLogin;
     if (logoutBtn) logoutBtn.onclick = adminLogout;
+    if (cleanupBtn) cleanupBtn.onclick = adminCleanup;
 }
 
 async function adminLogin() {
     const input = document.getElementById('adminKeyInput');
     const status = document.getElementById('adminStatus');
+    const controls = document.getElementById('adminCleanupControls');
     const key = (input?.value || '').trim();
     if (!key) { if (status) status.textContent = 'Enter a key'; return; }
     const ok = await verifyAdminKey(key);
@@ -611,19 +619,59 @@ async function adminLogin() {
         adminKey = key;
         localStorage.setItem('ADMIN_KEY', key);
         if (status) status.textContent = 'Unlocked';
+        if (controls) controls.classList.remove('hidden');
         await loadAdminFiles();
     } else {
         if (status) status.textContent = 'Invalid key';
+        if (controls) controls.classList.add('hidden');
     }
 }
 
 function adminLogout() {
     const status = document.getElementById('adminStatus');
+    const controls = document.getElementById('adminCleanupControls');
     adminKey = null;
     localStorage.removeItem('ADMIN_KEY');
     if (status) status.textContent = 'Locked';
+    if (controls) controls.classList.add('hidden');
     const grid = document.getElementById('adminFilesGrid');
     if (grid) grid.innerHTML = '';
+}
+
+async function adminCleanup() {
+    if (!adminKey) { showNotification('error', 'Unauthorized', 'Unlock admin first'); return; }
+    const btn = document.getElementById('adminCleanupBtn');
+    const resBox = document.getElementById('adminCleanupResult');
+    const thresholdInput = document.getElementById('cleanupThreshold');
+    const hours = parseInt(thresholdInput?.value || '6', 10);
+    const thresholdMs = Number.isFinite(hours) && hours > 0 ? hours * 60 * 60 * 1000 : undefined;
+    const body = thresholdMs ? { thresholdMs } : {};
+    const original = btn?.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = 'Cleaning…'; }
+    if (resBox) { resBox.textContent = 'Running cleanup…'; }
+    try {
+        const res = await fetch('/api/admin/cleanup-pending', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showNotification('error', 'Cleanup failed', data.message || 'Unknown error');
+            if (resBox) resBox.textContent = 'Cleanup failed';
+            return;
+        }
+        if (resBox) {
+            resBox.textContent = `Scanned: ${data.scanned ?? 0} • Kept: ${data.kept ?? 0} • Removed: ${data.removed ?? 0} • Deleted from B2: ${data.deletedFromB2 ?? 0}`;
+        }
+        showNotification('success', 'Cleanup complete', 'Pending items cleaned');
+        await loadAdminFiles();
+    } catch (e) {
+        showNotification('error', 'Cleanup failed', e.message || 'Network error');
+        if (resBox) resBox.textContent = 'Cleanup failed';
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = original || 'Cleanup Pending'; }
+    }
 }
 
 async function verifyAdminKey(key) {
