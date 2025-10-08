@@ -21,14 +21,9 @@ function setupEventListeners() {
 
     // File inputs for preview
     const fileInput = document.getElementById('file');
-    const coverInput = document.getElementById('coverImage');
     
     if (fileInput) {
         fileInput.addEventListener('change', previewSelectedFile);
-    }
-    
-    if (coverInput) {
-        coverInput.addEventListener('change', previewCoverImage);
     }
 }
 
@@ -233,22 +228,31 @@ async function handleFileUpload(e) {
             progressPercentage.textContent = '100%';
             progressLabel.textContent = 'Upload complete!';
             
-            // Optional: upload selected cover image
+            // Auto-generate a cover from the first page of the PDF (if PDF.js is available)
             try {
-                const coverEl = document.getElementById('coverImage');
-                if (coverEl && coverEl.files && coverEl.files[0]) {
-                    const cover = coverEl.files[0];
-                    const cuRes = await fetch('/api/cover-upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: fileId, originalFilename: cover.name, contentType: cover.type || 'image/jpeg' })
-                    });
-                    if (cuRes.ok) {
-                        const cu = await cuRes.json();
-                        await uploadDirectToB2(cu.uploadUrl, cu.authorizationToken, cu.coverB2Name, cover, () => {});
+                const isPdf = (file.type && file.type.toLowerCase().includes('pdf')) || /\.pdf$/i.test(file.name);
+                if (isPdf && typeof window !== 'undefined' && window['pdfjsLib']) {
+                    progressLabel.textContent = 'Generating cover thumbnail...';
+                    const thumbBlob = await generatePdfThumbnail(file, 600); // larger to look crisp in grid
+                    if (thumbBlob) {
+                        const cuRes = await fetch('/api/cover-upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id: fileId,
+                                originalFilename: (fileName || file.name).replace(/\.[^./]+$/, '') + '.jpg',
+                                contentType: 'image/jpeg'
+                            })
+                        });
+                        if (cuRes.ok) {
+                            const cu = await cuRes.json();
+                            // Wrap blob in a File-like for content-type
+                            const coverFile = new File([thumbBlob], cu.coverB2Name.split('/').pop() || 'cover.jpg', { type: 'image/jpeg' });
+                            await uploadDirectToB2(cu.uploadUrl, cu.authorizationToken, cu.coverB2Name, coverFile, () => {});
+                        }
                     }
                 }
-            } catch (e) { console.warn('Cover upload skipped:', e); }
+            } catch (e) { console.warn('Auto cover generation skipped:', e); }
 
             // Mark the file as ready so it appears in Browse
             try {
@@ -355,16 +359,44 @@ function previewSelectedFile(e) {
     }
 }
 
-// Preview cover image
-function previewCoverImage(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+// Generate a thumbnail image (JPEG) from the first page of a PDF File using PDF.js
+// Returns a Blob or null on failure
+async function generatePdfThumbnail(file, maxDimension = 400) {
+    try {
+        if (!window['pdfjsLib']) return null;
+        const pdfjsLib = window['pdfjsLib'];
+        // workerSrc should be set in index.html; if not, try a safe default
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            // This path must match where pdf.worker.js is hosted in your app
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+        }
 
-    // You could add a preview here if needed
-    console.log('Cover image selected:', file.name);
+        const data = await file.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data });
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+
+        // Base viewport at scale 1, then compute scale to fit maxDimension
+        const baseViewport = page.getViewport({ scale: 1 });
+        const longestSide = Math.max(baseViewport.width, baseViewport.height);
+        const scale = Math.max(1, maxDimension / longestSide);
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+        return blob || null;
+    } catch (err) {
+        console.warn('PDF thumbnail generation failed:', err);
+        return null;
+    }
 }
 
-// Preview file in modal
 async function previewFile(fileId) {
     const file = files.find(f => f.id === fileId);
     if (!file) return;
