@@ -98,9 +98,20 @@ export async function onRequest(context) {
   // Friendly display name; choose disposition based on query param
   const url = new URL(request.url);
   const inline = url.searchParams.get('inline') === '1' || url.searchParams.get('disposition') === 'inline';
-  const friendlyName = fileInfo.filename || fileInfo.b2FileName;
-  const dispositionType = inline ? 'inline' : 'attachment';
-  const contentDisposition = encodeURIComponent(`${dispositionType}; filename=\"${friendlyName}\"`);
+    // Build a friendly filename with extension
+    let friendlyName = fileInfo.originalName || fileInfo.filename || fileInfo.b2FileName;
+    if (!/\.[A-Za-z0-9]{2,8}$/.test(friendlyName || '')) {
+      const b2Ext = (fileInfo.b2FileName || '').split('.').pop();
+      if (b2Ext) friendlyName = `${friendlyName}.${b2Ext}`;
+    }
+    const dispositionType = inline ? 'inline' : 'attachment';
+    // Build RFC 5987 compliant Content-Disposition with ASCII fallback
+    const asciiFallback = (friendlyName || 'download')
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/[^\x20-\x7E]/g, '')
+      .trim() || 'download';
+    const utf8Encoded = encodeURIComponent(friendlyName).replace(/['()]/g, escape).replace(/\*/g, '%2A');
+    const contentDisposition = `${dispositionType}; filename="${asciiFallback}"; filename*=UTF-8''${utf8Encoded}`;
 
     // Proxy the file from B2 with Authorization header so browsers don't prompt for credentials.
     const range = request.headers.get('Range');
@@ -122,13 +133,13 @@ export async function onRequest(context) {
     const headers = new Headers();
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Accept-Ranges', b2Resp.headers.get('Accept-Ranges') || 'bytes');
-    const ct = b2Resp.headers.get('Content-Type') || 'application/octet-stream';
-    headers.set('Content-Type', ct);
+  const ct = fileInfo.contentType || b2Resp.headers.get('Content-Type') || 'application/octet-stream';
+  headers.set('Content-Type', ct);
     const cr = b2Resp.headers.get('Content-Range');
     if (cr) headers.set('Content-Range', cr);
     const len = b2Resp.headers.get('Content-Length');
     if (len) headers.set('Content-Length', len);
-    headers.set('Content-Disposition', decodeURIComponent(contentDisposition));
+  headers.set('Content-Disposition', contentDisposition);
     const etag = b2Resp.headers.get('ETag');
     if (etag) headers.set('ETag', etag);
     const lm = b2Resp.headers.get('Last-Modified');

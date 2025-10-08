@@ -232,6 +232,24 @@ async function handleFileUpload(e) {
             progressPercentage.textContent = '100%';
             progressLabel.textContent = 'Upload complete!';
             
+            // If a cover image was selected, upload it now
+            if (coverInput && coverInput.files && coverInput.files[0]) {
+                try {
+                    const cover = coverInput.files[0];
+                    const ext = (cover.name.split('.').pop() || 'jpg').toLowerCase();
+                    const coverReq = await fetch('/api/upload-cover', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fileId, ext, contentType: cover.type || 'image/jpeg', size: cover.size })
+                    });
+                    if (coverReq.ok) {
+                        const { uploadUrl: cUrl, authorizationToken: cTok, coverB2Name, contentType } = await coverReq.json();
+                        await uploadDirectToB2(cUrl, cTok, coverB2Name, cover, () => {});
+                        // Save cover info for the file so grid can render it
+                        await fetch(`/api/update/${fileId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coverB2Name, coverContentType: contentType }) });
+                    }
+                } catch (e) { console.warn('Cover upload skipped:', e.message); }
+            }
+
             // Show success notification
             showNotification('success', 'Upload Successful!', `${fileName || file.name} has been uploaded successfully`);
             
