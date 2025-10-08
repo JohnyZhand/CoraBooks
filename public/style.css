@@ -493,7 +493,8 @@ body {
 .book-cover img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* show entire image without cropping */
+    background: var(--darker-bg); /* fill letterbox space */
 }
 
 .book-icon {
