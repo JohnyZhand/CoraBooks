@@ -107,7 +107,8 @@ function displayFiles(filesToShow) {
     filesList.innerHTML = filesToShow.map(file => `
         <div class="book-card" onclick="previewFile('${file.id}')">
             <div class="book-cover">
-                ${file.coverUrl ? `<img src="${file.coverUrl}" alt="${escapeHtml(file.filename)} cover" onerror="this.remove()" />` : `<div class="book-icon">${getFileIcon(file.filename)}</div>`}
+                <img src="/api/cover/${file.id}" alt="${escapeHtml(file.filename)} cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                <div class="book-icon" style="display:none">${getFileIcon(file.filename)}</div>
             </div>
             <div class="book-info">
                 <div class="book-title">${escapeHtml(file.filename)}</div>
@@ -232,23 +233,31 @@ async function handleFileUpload(e) {
             progressPercentage.textContent = '100%';
             progressLabel.textContent = 'Upload complete!';
             
-            // If a cover image was selected, upload it now
-            if (coverInput && coverInput.files && coverInput.files[0]) {
-                try {
-                    const cover = coverInput.files[0];
-                    const ext = (cover.name.split('.').pop() || 'jpg').toLowerCase();
-                    const coverReq = await fetch('/api/upload-cover', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ fileId, ext, contentType: cover.type || 'image/jpeg', size: cover.size })
+            // Optional: upload selected cover image
+            try {
+                const coverEl = document.getElementById('coverImage');
+                if (coverEl && coverEl.files && coverEl.files[0]) {
+                    const cover = coverEl.files[0];
+                    const cuRes = await fetch('/api/cover-upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: fileId, originalFilename: cover.name, contentType: cover.type || 'image/jpeg' })
                     });
-                    if (coverReq.ok) {
-                        const { uploadUrl: cUrl, authorizationToken: cTok, coverB2Name, contentType } = await coverReq.json();
-                        await uploadDirectToB2(cUrl, cTok, coverB2Name, cover, () => {});
-                        // Save cover info for the file so grid can render it
-                        await fetch(`/api/update/${fileId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coverB2Name, coverContentType: contentType }) });
+                    if (cuRes.ok) {
+                        const cu = await cuRes.json();
+                        await uploadDirectToB2(cu.uploadUrl, cu.authorizationToken, cu.coverB2Name, cover, () => {});
                     }
-                } catch (e) { console.warn('Cover upload skipped:', e.message); }
-            }
+                }
+            } catch (e) { console.warn('Cover upload skipped:', e); }
+
+            // Mark the file as ready so it appears in Browse
+            try {
+                await fetch('/api/commit-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: fileId })
+                });
+            } catch (e) { console.warn('Commit failed:', e); }
 
             // Show success notification
             showNotification('success', 'Upload Successful!', `${fileName || file.name} has been uploaded successfully`);

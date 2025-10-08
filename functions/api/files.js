@@ -6,9 +6,10 @@ export async function onRequest(context) {
   
   try {
     // Get files metadata from KV storage (Cloudflare's database)
-    const filesData = await env.CORABOOKS_KV.get('files', 'json') || [];
-    
-    return new Response(JSON.stringify(filesData), {
+  const filesData = await env.CORABOOKS_KV.get('files', 'json') || [];
+  // Only list files that are marked ready; keep legacy items (no ready flag)
+  const onlyReady = filesData.filter(f => f && (f.ready === true || typeof f.ready === 'undefined'));
+    return new Response(JSON.stringify(onlyReady), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

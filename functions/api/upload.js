@@ -124,6 +124,7 @@ export async function onRequest(context) {
       size: size,
       uploadedAt: new Date().toISOString(),
       b2FileName: uniqueFilename,
+      ready: false
     };
 
     // Get existing files and add new one
