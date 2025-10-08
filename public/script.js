@@ -156,6 +156,14 @@ async function handleFileUpload(e) {
         return;
     }
 
+    // Restrict file types client-side: only PDF, EPUB, MOBI
+    const allowed = ['pdf', 'epub', 'mobi'];
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!allowed.includes(ext)) {
+        showNotification('error', 'Unsupported file type', 'Only PDF, EPUB, and MOBI files are allowed.');
+        return;
+    }
+
     // Check file size (2GB limit)
     const maxSize = 2 * 1024 * 1024 * 1024; // 2GB in bytes
     if (file.size > maxSize) {

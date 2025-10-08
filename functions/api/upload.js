@@ -24,6 +24,23 @@ export async function onRequest(context) {
   try {
   const { filename, originalFilename, contentType, size } = await request.json();
     
+    // Enforce allowed file types: PDF, EPUB, MOBI
+    const allowedExt = ['pdf', 'epub', 'mobi'];
+    const sourceName = (originalFilename || filename || '').toString();
+    const dotIdx0 = sourceName.lastIndexOf('.');
+    const reqExt = dotIdx0 > -1 ? sourceName.substring(dotIdx0 + 1).toLowerCase() : '';
+    if (!allowedExt.includes(reqExt)) {
+      return new Response(JSON.stringify({ 
+        message: 'Only PDF, EPUB, and MOBI files are allowed.' 
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+    
     // Validate file size (2GB limit)
     const maxSize = 2 * 1024 * 1024 * 1024; // 2GB in bytes
     if (size > maxSize) {
@@ -40,10 +57,9 @@ export async function onRequest(context) {
 
     // Generate unique filename
     const fileId = uuidv4();
-  // Determine extension from the user's actual file name to avoid encoding issues
-  const sourceName = (originalFilename || filename || '').toString();
+  // Determine extension from the user's actual file name (we already validated allowed types)
   const dotIdx = sourceName.lastIndexOf('.');
-  const fileExtension = dotIdx > -1 ? sourceName.substring(dotIdx + 1) : 'bin';
+  const fileExtension = dotIdx > -1 ? sourceName.substring(dotIdx + 1).toLowerCase() : reqExt || 'pdf';
   const uniqueFilename = `${fileId}.${fileExtension}`;
     
     // Get Backblaze B2 credentials from environment

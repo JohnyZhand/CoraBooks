@@ -1,34 +1,4 @@
-// Proxies the cover image by id from B2
-export async function onRequest(context) {
-  const { env, params } = context;
-  try {
-    const id = params.id;
-    const files = await env.CORABOOKS_KV.get('files', 'json') || [];
-    const file = files.find(f => f.id === id && f.coverB2Name);
-    if (!file) return new Response('Not found', { status: 404, headers: cors() });
-
-    const auth = await b2Auth(env);
-    const b2Resp = await fetch(`${auth.downloadUrl}/file/${env.B2_BUCKET_NAME}/${encodeURIComponent(file.coverB2Name)}`, {
-      headers: { 'Authorization': auth.authorizationToken }
-    });
-    if (!b2Resp.ok) return new Response('Not found', { status: 404, headers: cors() });
-
-    const headers = new Headers();
-    headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Content-Type', file.coverContentType || b2Resp.headers.get('Content-Type') || 'image/jpeg');
-    headers.set('Cache-Control', 'public, max-age=86400');
-    return new Response(b2Resp.body, { status: 200, headers });
-  } catch (e) {
-    return new Response('Error', { status: 500, headers: cors() });
-  }
-}
-
-function cors() { return { 'Access-Control-Allow-Origin': '*' }; }
-async function b2Auth(env) {
-  const r = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', { headers: { Authorization: `Basic ${btoa(env.B2_APPLICATION_KEY_ID+":"+env.B2_APPLICATION_KEY)}` } });
-  if (!r.ok) throw new Error('B2 auth failed');
-  return await r.json();
-}// Streams the cover image from B2 if it exists
+// Streams the cover image from B2 if it exists
 export async function onRequest(context) {
   const { env, params } = context;
   const fileId = params.id;
