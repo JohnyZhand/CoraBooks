@@ -259,6 +259,27 @@ async function handleFileUpload(e) {
                             await uploadDirectToB2(cu.uploadUrl, cu.authorizationToken, cu.coverB2Name, coverFile, () => {});
                         }
                     }
+                } else if (/\.epub$/i.test(file.name) && typeof window !== 'undefined' && window.JSZip) {
+                    try {
+                        progressLabel.textContent = 'Extracting EPUB cover...';
+                        const coverBlob = await extractEpubCover(file);
+                        if (coverBlob) {
+                            const cuRes = await fetch('/api/cover-upload', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    id: fileId,
+                                    originalFilename: (fileName || file.name).replace(/\.[^./]+$/, '') + '.jpg',
+                                    contentType: 'image/jpeg'
+                                })
+                            });
+                            if (cuRes.ok) {
+                                const cu = await cuRes.json();
+                                const coverFile = new File([coverBlob], cu.coverB2Name.split('/').pop() || 'cover.jpg', { type: 'image/jpeg' });
+                                await uploadDirectToB2(cu.uploadUrl, cu.authorizationToken, cu.coverB2Name, coverFile, () => {});
+                            }
+                        }
+                    } catch (epErr) { console.warn('EPUB cover extraction failed:', epErr); }
                 }
             } catch (e) { console.warn('Auto cover generation skipped:', e); }
 
@@ -410,39 +431,60 @@ async function generatePdfThumbnail(file, maxDimension = 400) {
 async function previewFile(fileId) {
     const file = files.find(f => f.id === fileId);
     if (!file) return;
-
     currentFile = file;
-    
     const modal = document.getElementById('previewModal');
     const previewFileName = document.getElementById('previewFileName');
-    const downloadFileName = document.getElementById('downloadFileName');
+    if (previewFileName) previewFileName.textContent = file.filename;
 
-    previewFileName.textContent = file.filename;
-    downloadFileName.textContent = file.filename;
+    const pdfViewer = document.getElementById('pdfViewer');
+    const epubViewer = document.getElementById('epubViewer');
+    const epubContent = document.getElementById('epubContent');
+    const fallback = document.getElementById('previewFallback');
+    if (pdfViewer) { pdfViewer.style.display = 'none'; pdfViewer.removeAttribute('src'); }
+    if (epubViewer) epubViewer.style.display = 'none';
+    if (epubContent) epubContent.innerHTML = '';
+    if (fallback) { fallback.style.display = 'none'; fallback.innerHTML = ''; }
 
-    const modalBody = document.querySelector('.modal-body');
     const fileExtension = file.filename.toLowerCase();
-
     if (fileExtension.endsWith('.pdf')) {
-        // Render inline PDF preview using the API (proxies auth so no prompt)
+        // Use proxy download for inline PDF
         const src = `/api/download/${file.id}?inline=1`;
-        modalBody.innerHTML = `<embed id="pdfViewer" src="${src}" type="application/pdf" width="100%" height="500px">`;
+        if (pdfViewer) { pdfViewer.src = src; pdfViewer.style.display = 'block'; }
+    } else if (fileExtension.endsWith('.epub')) {
+        if (window.ePub) {
+            try {
+                if (epubViewer) epubViewer.style.display = 'block';
+                if (epubContent) epubContent.innerHTML = '<div style="padding:1rem;">Loading EPUB preview...</div>';
+                const res = await fetch(`/api/download/${file.id}`);
+                if (!res.ok) throw new Error('Fetch failed');
+                const buf = await res.arrayBuffer();
+                const book = ePub(buf, { openAs: 'binary' });
+                const rendition = book.renderTo('epubContent', { width: '100%', height: '500px' });
+                await rendition.display();
+            } catch (e) {
+                console.warn('EPUB preview failed', e);
+                if (fallback) {
+                    fallback.style.display = 'block';
+                    fallback.innerHTML = `<p>Unable to preview this EPUB in the browser. You can still download it.</p>`;
+                }
+            }
+        } else if (fallback) {
+            fallback.style.display = 'block';
+            fallback.innerHTML = '<p>EPUB preview library not loaded.</p>';
+        }
     } else {
-        let fileTypeIcon = '📄';
-        let fileTypeName = 'Document';
-        if (fileExtension.endsWith('.epub')) { fileTypeIcon = '📖'; fileTypeName = 'EPUB eBook'; }
-        else if (fileExtension.endsWith('.mobi')) { fileTypeIcon = '📚'; fileTypeName = 'MOBI eBook'; }
-        modalBody.innerHTML = `
-            <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">${fileTypeIcon}</div>
-                <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">${fileTypeName}</h3>
-                <p><strong>File name:</strong> ${file.filename}</p>
-                <p><strong>File size:</strong> ${formatFileSize(file.size)}</p>
-                <p><strong>Uploaded:</strong> ${new Date(file.uploadedAt).toLocaleDateString()}</p>
+        if (fallback) {
+            fallback.style.display = 'block';
+            fallback.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                <div style=\"font-size: 4rem; margin-bottom: 1rem;\">📁</div>
+                <h3 style=\"color: var(--primary-purple); margin-bottom: 1rem;\">Preview Unavailable</h3>
+                <p>File name: ${escapeHtml(file.filename)}</p>
+                <p>File size: ${formatFileSize(file.size)}</p>
+                <p>Uploaded: ${new Date(file.uploadedAt).toLocaleDateString()}</p>
             </div>`;
+        }
     }
-
-    modal.style.display = 'block';
+    if (modal) modal.style.display = 'block';
 }
 
 // Download file
@@ -722,4 +764,51 @@ async function adminDelete(id) {
     } catch (e) {
         showNotification('error', 'Delete failed', e.message);
     }
+}
+
+// Extract cover image from an EPUB file (tries common paths and metadata). Returns Blob or null.
+async function extractEpubCover(epubFile) {
+    try {
+        if (!window.JSZip) return null;
+        const arrayBuffer = await epubFile.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        // Strategy: 1) look for images with 'cover' in filename 2) parse content.opf for meta cover id
+        const imageExtensions = ['jpg','jpeg','png','gif','webp'];
+        let candidateFiles = [];
+        zip.forEach((relativePath, file) => {
+            const lower = relativePath.toLowerCase();
+            if (imageExtensions.some(ext => lower.endsWith('.'+ext)) && lower.includes('cover')) {
+                candidateFiles.push(relativePath);
+            }
+        });
+        if (candidateFiles.length > 0) {
+            // Pick the smallest path depth (likely primary cover)
+            candidateFiles.sort((a,b)=>a.split('/').length - b.split('/').length);
+            const coverData = await zip.file(candidateFiles[0]).async('blob');
+            return coverData;
+        }
+        // Fallback: parse package file (content.opf or *.opf) to locate manifest item with id referenced by meta name="cover"
+        const opfPath = Object.keys(zip.files).find(p=>p.toLowerCase().endsWith('.opf'));
+        if (opfPath) {
+            const opfText = await zip.file(opfPath).async('text');
+            const coverIdMatch = opfText.match(/<meta[^>]+name=["']cover["'][^>]*content=["']([^"']+)["']/i);
+            if (coverIdMatch) {
+                const coverId = coverIdMatch[1];
+                const itemMatch = opfText.match(new RegExp(`<item[^>]+id=["']${coverId}["'][^>]*href=["']([^"']+)["']`, 'i'));
+                if (itemMatch) {
+                    let href = itemMatch[1];
+                    // Resolve relative to opfPath
+                    const baseDir = opfPath.split('/').slice(0,-1).join('/');
+                    let fullPath = baseDir ? `${baseDir}/${href}` : href;
+                    fullPath = fullPath.replace(/\\/g,'/');
+                    if (zip.file(fullPath)) {
+                        return await zip.file(fullPath).async('blob');
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('extractEpubCover failed', e);
+    }
+    return null;
 }
