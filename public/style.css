@@ -818,6 +818,30 @@ body {
     flex-shrink: 0;
 }
 
+/* ASCII art peering figure */
+.ascii-peek {
+    position: absolute;
+    top: 50%;
+    right: -40px; /* shift slightly out of the card to look like peering */
+    transform: translateY(-50%);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    line-height: 1.05;
+    letter-spacing: 0; /* preserve density */
+    white-space: pre;
+    color: rgba(255,255,255,0.14);
+    text-shadow: 0 0 4px rgba(139,92,246,0.25);
+    pointer-events: none;
+    user-select: none;
+}
+
+@media (max-width: 900px) {
+    .ascii-peek { right: -80px; opacity: 0.18; }
+}
+@media (max-width: 700px) {
+    .ascii-peek { display: none; }
+}
+
 .about-text {
     flex: 1;
 }
