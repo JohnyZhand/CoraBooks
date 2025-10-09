@@ -58,6 +58,16 @@ function showSection(sectionName) {
     if (sectionName === 'admin') {
         initAdmin();
     }
+
+    // Toggle ASCII art visibility: hide on upload, show elsewhere
+    const asciiCat = document.getElementById('asciiCat');
+    if (asciiCat) {
+        if (sectionName === 'upload') {
+            asciiCat.style.display = 'none';
+        } else {
+            asciiCat.style.display = '';
+        }
+    }
 }
 
 // Load files from server
