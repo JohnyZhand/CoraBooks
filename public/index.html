@@ -205,32 +205,7 @@
         <!-- Notification Container -->
         <div id="notificationContainer" class="notification-container"></div>
 
-        <!-- File Preview Modal -->
-        <div id="previewModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 id="previewFileName">Book Preview</h3>
-                    <button class="close-btn" onclick="closePreview()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div id="previewContainer">
-                        <embed id="pdfViewer" type="application/pdf" width="100%" height="500px" style="display:none;">
-                        <div id="epubViewer" style="display:none; width:100%; height:500px; overflow:auto; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:8px; padding:0;">
-                            <div id="epubContent" style="padding:1rem; font-size:14px; line-height:1.5; color:var(--text-primary);"></div>
-                        </div>
-                        <div id="previewFallback" style="display:none; text-align:center; padding:2rem; color:var(--text-secondary);"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-primary" onclick="downloadFile()">
-                        Download Book
-                    </button>
-                    <button class="btn-secondary" onclick="closePreview()">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Preview removed; direct downloads only -->
     </div>
 
         <!-- PDF.js for client-side first-page thumbnail generation -->
@@ -242,8 +217,6 @@
         </script>
         <!-- JSZip for EPUB cover extraction -->
         <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-        <!-- epub.js for EPUB rendering -->
-        <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
         <script src="script.js"></script>
 </body>
 </html>

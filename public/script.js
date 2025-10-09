@@ -1,5 +1,5 @@
 // Global variables
-let currentFile = null;
+// Removed preview state; only tracking files and admin key now
 let files = [];
 let adminKey = null;
 
@@ -100,7 +100,7 @@ function displayFiles(filesToShow) {
     }
 
     filesList.innerHTML = filesToShow.map(file => `
-        <div class="book-card" onclick="previewFile('${file.id}')">
+        <div class="book-card">
             <div class="book-cover">
                 <img src="/api/cover/${file.id}" alt="${escapeHtml(file.filename)} cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                 <div class="book-icon" style="display:none">${getFileIcon(file.filename)}</div>
@@ -112,9 +112,6 @@ function displayFiles(filesToShow) {
                     <span class="upload-date">${new Date(file.uploadedAt).toLocaleDateString()}</span>
                 </div>
                 <div class="book-actions">
-                    <button class="btn btn-outline" onclick="event.stopPropagation(); previewFile('${file.id}')">
-                        Preview
-                    </button>
                     <button class="btn btn-purple" onclick="event.stopPropagation(); downloadFile('${file.id}')">
                         Download
                     </button>
@@ -428,68 +425,9 @@ async function generatePdfThumbnail(file, maxDimension = 400) {
     }
 }
 
-async function previewFile(fileId) {
-    const file = files.find(f => f.id === fileId);
-    if (!file) return;
-    currentFile = file;
-    const modal = document.getElementById('previewModal');
-    const previewFileName = document.getElementById('previewFileName');
-    if (previewFileName) previewFileName.textContent = file.filename;
-
-    const pdfViewer = document.getElementById('pdfViewer');
-    const epubViewer = document.getElementById('epubViewer');
-    const epubContent = document.getElementById('epubContent');
-    const fallback = document.getElementById('previewFallback');
-    if (pdfViewer) { pdfViewer.style.display = 'none'; pdfViewer.removeAttribute('src'); }
-    if (epubViewer) epubViewer.style.display = 'none';
-    if (epubContent) epubContent.innerHTML = '';
-    if (fallback) { fallback.style.display = 'none'; fallback.innerHTML = ''; }
-
-    const fileExtension = file.filename.toLowerCase();
-    if (fileExtension.endsWith('.pdf')) {
-        // Use proxy download for inline PDF
-        const src = `/api/download/${file.id}?inline=1`;
-        if (pdfViewer) { pdfViewer.src = src; pdfViewer.style.display = 'block'; }
-    } else if (fileExtension.endsWith('.epub')) {
-        if (window.ePub) {
-            try {
-                if (epubViewer) epubViewer.style.display = 'block';
-                if (epubContent) epubContent.innerHTML = '<div style="padding:1rem;">Loading EPUB preview...</div>';
-                const res = await fetch(`/api/download/${file.id}`);
-                if (!res.ok) throw new Error('Fetch failed');
-                const buf = await res.arrayBuffer();
-                const book = ePub(buf, { openAs: 'binary' });
-                const rendition = book.renderTo('epubContent', { width: '100%', height: '500px' });
-                await rendition.display();
-            } catch (e) {
-                console.warn('EPUB preview failed', e);
-                if (fallback) {
-                    fallback.style.display = 'block';
-                    fallback.innerHTML = `<p>Unable to preview this EPUB in the browser. You can still download it.</p>`;
-                }
-            }
-        } else if (fallback) {
-            fallback.style.display = 'block';
-            fallback.innerHTML = '<p>EPUB preview library not loaded.</p>';
-        }
-    } else {
-        if (fallback) {
-            fallback.style.display = 'block';
-            fallback.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                <div style=\"font-size: 4rem; margin-bottom: 1rem;\">📁</div>
-                <h3 style=\"color: var(--primary-purple); margin-bottom: 1rem;\">Preview Unavailable</h3>
-                <p>File name: ${escapeHtml(file.filename)}</p>
-                <p>File size: ${formatFileSize(file.size)}</p>
-                <p>Uploaded: ${new Date(file.uploadedAt).toLocaleDateString()}</p>
-            </div>`;
-        }
-    }
-    if (modal) modal.style.display = 'block';
-}
-
 // Download file
 async function downloadFile(fileId) {
-    const file = fileId ? files.find(f => f.id === fileId) : currentFile;
+    const file = fileId ? files.find(f => f.id === fileId) : null;
     if (!file) return;
 
     try {
@@ -508,12 +446,7 @@ async function downloadFile(fileId) {
     }
 }
 
-// Close preview modal
-function closePreview() {
-    const modal = document.getElementById('previewModal');
-    modal.style.display = 'none';
-    currentFile = null;
-}
+// Preview removed; closePreview no longer needed
 
 // Show modern notification messages
 function showMessage(message, type = 'info') {
@@ -611,12 +544,7 @@ function escapeHtml(text) {
 }
 
 // Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('previewModal');
-    if (event.target === modal) {
-        closePreview();
-    }
-}
+// Removed modal click handler (preview removed)
 
 // Add some terminal easter eggs
 document.addEventListener('keydown', function(e) {
@@ -739,12 +667,10 @@ async function loadAdminFiles() {
                 <div class="book-title">${escapeHtml(f.filename)}</div>
                 <div class="book-meta">${formatFileSize(f.size)} • ${new Date(f.uploadedAt).toLocaleDateString()}</div>
                 <div class="book-actions">
-                    <button class="btn btn-outline" data-id="${f.id}">Preview</button>
                     <button class="btn btn-purple" data-del-id="${f.id}">Delete</button>
                 </div>
             </div>`;
-        card.querySelector('[data-del-id]')?.addEventListener('click', () => adminDelete(f.id));
-        card.querySelector('[data-id]')?.addEventListener('click', () => previewFile(f.id));
+    card.querySelector('[data-del-id]')?.addEventListener('click', () => adminDelete(f.id));
         grid.appendChild(card);
     });
 }
