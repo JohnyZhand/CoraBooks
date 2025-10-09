@@ -1280,32 +1280,3 @@ body {
 .message.error {
     background: linear-gradient(135deg, #ef4444, #dc2626);
 }
-
-/* Cat ASCII art styling */
-.ascii-cat {
-    max-width: 100%;
-    overflow-x: auto;
-    padding: 2rem 0 4rem;
-    text-align: center;
-    opacity: .22;
-    transition: opacity .3s ease;
-    font-family: "Courier New", Consolas, monospace;
-}
-.ascii-cat:hover { opacity: .38; }
-.ascii-cat pre {
-    display: inline-block;
-    text-align: left;
-    line-height: 0.9rem;
-    font-size: 0.65rem;
-    white-space: pre;
-    margin: 0;
-    background: linear-gradient(135deg, rgba(139,92,246,0.07), rgba(168,85,247,0.05));
-    padding: 1rem 1.25rem;
-    border: 1px solid rgba(139,92,246,0.25);
-    border-radius: .75rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
-    filter: drop-shadow(0 0 6px rgba(139,92,246,0.15));
-}
-@media (max-width: 768px) {
-  .ascii-cat pre { font-size: 0.5rem; line-height: 0.7rem; }
-}
