@@ -813,36 +813,7 @@ body {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
 }
 
-.about-icon {
-    font-size: 4rem;
-    flex-shrink: 0;
-}
-
-/* ASCII art peering figure */
-/* Container context for outer ASCII art */
-.about-content.with-ascii { position: relative; }
-
-.ascii-peek {
-    position: absolute;
-    top: 50%;
-    right: -220px; /* place fully outside bubble */
-    transform: translateY(-50%);
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 11px;
-    line-height: 1.05;
-    letter-spacing: 0;
-    white-space: pre;
-    color: rgba(255,255,255,0.18);
-    text-shadow: 0 0 6px rgba(139,92,246,0.35);
-    pointer-events: none;
-    user-select: none;
-    z-index: 1; /* behind nav but above background */
-}
-
-@media (max-width: 1300px) { .ascii-peek { right: -160px; font-size:10px; } }
-@media (max-width: 1100px) { .ascii-peek { right: -120px; font-size:9px; } }
-@media (max-width: 950px) { .ascii-peek { right: -90px; font-size:8px; } }
-@media (max-width: 850px) { .ascii-peek { display:none; } }
+/* .about-icon styles already defined earlier; removed redundant empty block */
 
 .about-text {
     flex: 1;
