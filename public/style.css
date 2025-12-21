@@ -1280,3 +1280,36 @@ body {
 .message.error {
     background: linear-gradient(135deg, #ef4444, #dc2626);
 }
+
+/* Stream Section Styles */
+.stream-wrapper {
+    width: 100%;
+    margin-top: 3rem;
+    clear: both;
+}
+
+.stream-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    background: var(--darker-bg);
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.stream-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+@media (max-width: 768px) {
+    .stream-wrapper {
+        margin-top: 2rem;
+    }
+}
