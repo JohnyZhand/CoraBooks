@@ -22,19 +22,28 @@
     --glow-purple: rgba(139, 92, 246, 0.3);
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     background: var(--dark-bg);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-primary);
     overflow-x: hidden;
     min-height: 100vh;
+    min-width: 100%;
     background-image: 
         radial-gradient(circle at 20% 80%, var(--glow-purple) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.2) 0%, transparent 50%);
+    background-attachment: fixed;
 }
 
 .app {
     min-height: 100vh;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 
 /* Header */
