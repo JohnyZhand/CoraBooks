@@ -189,6 +189,24 @@ body {
 }
 
 /* Calendario Academico Button */
+.button-section-title {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 2.5rem;
+    margin-bottom: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.button-section-title:first-of-type {
+    margin-top: 3rem;
+    border-top: none;
+}
+
 .cool-container {
     display: flex;
     justify-content: center;
