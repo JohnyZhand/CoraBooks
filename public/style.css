@@ -323,16 +323,24 @@ body {
     display: none;
 }
 
-/* ASCII Art styling - fixed decorative background element */
+/* ASCII Art styling - decorative element at page bottom */
 #asciiCat {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    z-index: -1;
+    position: relative;
+    z-index: 0;
     pointer-events: none;
     margin: 0;
+    margin-top: 100px;
     padding: 20px;
     background: none !important;
+    max-width: 100vw;
+    overflow: hidden;
+}
+
+/* Spacer for ASCII art area */
+.ascii-footer-space {
+    height: 450px;
+    position: relative;
+    pointer-events: none;
 }
 
 #student-tools-section {
