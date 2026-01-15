@@ -189,18 +189,22 @@ body {
 }
 
 /* Calendario Academico Button */
-.calendario-container {
+.cool-container {
     display: flex;
     justify-content: center;
     margin-top: 3rem;
-    padding: 2rem 0;
+    padding: 0.5rem 0;
 }
 
-.calendario-container a {
+.cool-container + .cool-container {
+    margin-top: 0;
+}
+
+.cool-container a {
     text-decoration: none;
 }
 
-.calendario-btn {
+.cool-btn {
     padding: 1.3em 3em;
     font-size: 12px;
     text-transform: uppercase;
@@ -216,14 +220,14 @@ body {
     outline: none;
 }
 
-.calendario-btn:hover {
+.cool-btn:hover {
     background-color: rgba(153, 69, 255, 0.5);
     /* box-shadow: 0px 15px 20px rgba(153, 69, 255, 0.5); */
     color: #fff;
     transform: translateY(-7px);
 }
 
-.calendario-btn:active {
+.cool-btn:active {
     transform: translateY(-1px);
 }
 
