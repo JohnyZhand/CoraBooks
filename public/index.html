@@ -307,23 +307,9 @@
 
         <!-- Notification Container -->
         <div id="notificationContainer" class="notification-container"></div>
-
-        <!-- Preview removed; direct downloads only -->
-    </div>
-
-        <!-- PDF.js for client-side first-page thumbnail generation -->
-        <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-        <script>
-            if (window.pdfjsLib) {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-            }
-        </script>
-        <!-- JSZip for EPUB cover extraction -->
-        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-        <script src="script.js"></script>
-
-    <!-- Cat ASCII art at end of page (raw, no wrapper/styles) -->
-<pre id="asciiCat" aria-hidden="true">⠀⠀⠀   ⠀⠀⣀⣴⣖⠒⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢤⣄
+        <!-- ASCII art footer (appears only at page end) -->
+        <footer class="ascii-footer" aria-hidden="true">
+            <pre id="asciiCat">⠀⠀⠀   ⠀⠀⣀⣴⣖⠒⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢤⣄
 ⠀⠀⠀⠀⣠⠞⠁⠑⠼⠃⢮⠇⠹⡄⠀⠀⠀⠀⠀⢀⣠⠴⢋⡡⠔⠒⠊⠈⣦⠀
 ⠀⠀⢀⡴⠃⠀⢠⠒⠒⡄⢠⢢⡀⡷⠀⠀⠀⣠⣶⠿⠗⠊⠁⠀⠀⠀⠀⠀⠈⣦
 ⠀⢀⡞⠀⠀⠀⠘⠶⠟⠁⠈⠉⢠⠃⣀⠴⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹
@@ -347,6 +333,22 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣀⣘
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣿
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⢉⣋</pre>
+        </footer>
+
+
+        <!-- Preview removed; direct downloads only -->
+    </div>
+
+        <!-- PDF.js for client-side first-page thumbnail generation -->
+        <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+        <script>
+            if (window.pdfjsLib) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+            }
+        </script>
+        <!-- JSZip for EPUB cover extraction -->
+        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+        <script src="script.js"></script>
 </body>
 </html>
 <!-- Mera canto de entrometio salgase de los devtools AHORA -->
