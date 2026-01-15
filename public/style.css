@@ -319,8 +319,28 @@ body {
            inset 0 0 .5em .25em var(--glow-color);
 }
 
+.glow-btn.no-triangle::after {
+    display: none;
+}
+
+/* ASCII Art styling - fixed decorative background element */
+#asciiCat {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    pointer-events: none;
+    margin: 0;
+    padding: 20px;
+    background: none !important;
+}
+
 #student-tools-section {
     scroll-margin-top: 100px;
+}
+
+#browse-section {
+    scroll-margin-top: 80px;
 }
 
 /* Books Grid */
