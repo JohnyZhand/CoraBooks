@@ -1013,6 +1013,19 @@ body {
      line-height: 1; /* prevent vertical shrink */
  }
 
+/* About card centered layout with image above text */
+.about-main-card-centered {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.about-cat-image {
+    width: 110px;
+    height: auto;
+    object-fit: contain;
+}
+
 .about-text {
     flex: 1;
 }
@@ -1299,6 +1312,10 @@ body {
     
     .about-icon {
         font-size: 3rem;
+    }
+    
+    .about-cat-image {
+        width: 95px;
     }
     
     .about-text p {
