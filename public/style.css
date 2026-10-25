@@ -53,9 +53,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 img { max-width: 100%; display: block; }
 .hidden { display: none !important; }
 
-/* CRT scanlines + vignette, purely decorative */
+/* CRT scanlines + vignette on the background only (behind .app), so covers and text stay crisp */
 .scanlines {
-    position: fixed; inset: 0; z-index: 9000; pointer-events: none;
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background:
         repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0px, rgba(0, 0, 0, 0.16) 1px, transparent 1px, transparent 3px),
         radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.45) 100%);
@@ -239,12 +239,6 @@ img { max-width: 100%; display: block; }
     font-size: 10px; letter-spacing: 0.14em; color: var(--acc);
     background: rgba(6, 6, 13, 0.85); border: 1px solid var(--line2);
 }
-.tile-cover::after {
-    content: ''; position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(180deg, transparent 70%, rgba(6, 6, 13, 0.55));
-    opacity: 0; transition: opacity 0.2s;
-}
-.tile:hover .tile-cover::after { opacity: 1; }
 .tile-title {
     margin-top: 10px; font-size: 12.5px; font-weight: 500; line-height: 1.35; color: var(--text);
     display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
