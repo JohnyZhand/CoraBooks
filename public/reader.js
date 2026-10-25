@@ -22,6 +22,7 @@
 
   const fileUrl = '/api/download/' + encodeURIComponent(id) + '?inline=1';
   els.download.href = '/api/download/' + encodeURIComponent(id);
+  const bookLink = $('rBookLink'); if (bookLink) bookLink.href = '/book?id=' + encodeURIComponent(id);
   els.errorDownload.href = els.download.href;
 
   if (!window.pdfjsLib) { fail('No se pudo cargar el visor de PDF. Revisa tu conexión y recarga la página.'); return; }

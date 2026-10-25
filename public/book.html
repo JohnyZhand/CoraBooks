@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoraBooks - Libro</title>
+  <meta name="description" content="Una librería bien sousou" />
+  <meta property="og:type" content="book" />
+  <meta property="og:site_name" content="CoraBooks" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="wrap topbar-in">
+        <a class="brand" href="/">
+          <img src="/bookcat.png" class="brand-cat" alt="" />
+          <span class="brand-name">CORABOOKS<span class="cursor">_</span></span>
+          <span class="brand-tag">De un Maceta A Otro</span>
+        </a>
+        <div class="sysline"><span class="dot"></span>SYS.ONLINE // FICHA</div>
+        <nav class="nav">
+          <a class="nav-btn" href="/">Biblioteca</a>
+          <a class="nav-btn" href="/#upload">Subir</a>
+          <a class="nav-btn" href="/#about">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="wrap">
+        <a class="back" href="/">&larr; Volver a la biblioteca</a>
+
+        <div id="bookView" class="book hidden">
+          <div class="book-cover-wrap">
+            <div class="book-cover" id="cover">
+              <img id="coverImg" alt="" />
+              <div class="fallback" id="coverFallback">PDF</div>
+            </div>
+            <div class="cover-strip"><span id="stripFmt">FILE // PDF</span><span id="stripSize"></span></div>
+          </div>
+
+          <div class="book-info">
+            <span class="label">Ficha</span>
+            <h1 class="book-title" id="title">&nbsp;</h1>
+            <div class="book-author" id="author"></div>
+
+            <div class="book-actions">
+              <a class="btn btn-primary" id="readBtn" href="#">&#9654; Leer en línea</a>
+              <a class="btn" id="downloadBtn" href="#">&#11015; Descargar</a>
+            </div>
+
+            <dl class="spec" id="spec"></dl>
+
+            <div class="panel hidden" id="synopsisPanel">
+              <div class="panel-title">Sinopsis</div>
+              <p class="synopsis clamped" id="synopsis"></p>
+              <button class="readmore hidden" id="readMore" type="button">[ leer más ]</button>
+              <div class="tags" id="tags"></div>
+              <div class="source" id="source"></div>
+            </div>
+
+            <div class="panel hidden" id="notePanel">
+              <div class="panel-title">Nota de quien lo subió</div>
+              <p class="synopsis" id="note"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="loading" id="loading" style="display:flex"><div class="loading-spinner"></div><span>CARGANDO FICHA…</span></div>
+
+        <div class="panel hidden center" id="notFound">
+          <div class="panel-title">Error</div>
+          <p class="muted">No encontramos ese libro. Puede que haya sido borrado.</p>
+          <p style="margin-top:14px"><a class="btn" href="/">Volver a la biblioteca</a></p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="ascii-footer" aria-hidden="true">
+      <pre id="asciiCat"></pre>
+    </footer>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/book.js"></script>
+</body>
+</html>

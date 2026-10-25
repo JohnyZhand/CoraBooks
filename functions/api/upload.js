@@ -2,6 +2,7 @@
 // Replaces POST /api/upload endpoint
 
 import { v4 as uuidv4 } from 'uuid';
+import { sanitizeMeta } from '../../lib/meta.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -22,7 +23,9 @@ export async function onRequest(context) {
   }
 
   try {
-  const { filename, originalFilename, description, contentType, size } = await request.json();
+  const { filename, originalFilename, description, contentType, size, meta } = await request.json();
+  // Optional curated metadata gathered in the browser (PDF info + Google Books lookup)
+  const cleanMeta = sanitizeMeta(meta);
   // Optional free-text description shown on the book card (trimmed, capped)
   const cleanDescription = typeof description === 'string' ? description.trim().slice(0, 1000) : '';
     
@@ -116,6 +119,7 @@ export async function onRequest(context) {
       filename: filename, // display name from the form
       originalName: originalFilename || filename,
       description: cleanDescription,
+      ...(cleanMeta ? { meta: cleanMeta } : {}),
       contentType: contentType || 'application/octet-stream',
       size: size,
       uploadedAt: new Date().toISOString(),

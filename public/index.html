@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>CoraBooks - De Un Maceta A Otro</title>
   <meta name="description" content="Una librería bien sousou" />
@@ -23,368 +23,255 @@
   <meta name="twitter:image" content="https://corabooks.pages.dev/og-image.png" />
 
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Favicon -->
   <link rel="icon" href="/favicon.ico" type="image/x-icon" />
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 </head>
 <body>
-    <div class="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="container">
-                <div class="logo">
-                    <h1>CoraBooks</h1>
-                    <span class="tagline">De un Maceta A Otro</span>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="wrap topbar-in">
+        <a class="brand" href="/">
+          <img src="bookcat.png" class="brand-cat" alt="" />
+          <span class="brand-name">CORABOOKS<span class="cursor">_</span></span>
+          <span class="brand-tag">De un Maceta A Otro</span>
+        </a>
+        <div class="sysline"><span class="dot"></span>SYS.ONLINE // UPRAG // <span id="bookCount">--</span>&nbsp;LIBROS</div>
+        <nav class="nav">
+          <button class="nav-btn active" data-section="browse" onclick="showSection('browse')">Biblioteca</button>
+          <button class="nav-btn" data-section="upload" onclick="showSection('upload')">Subir</button>
+          <button class="nav-btn" data-section="about" onclick="showSection('about')">About</button>
+          <button class="nav-btn" data-section="admin" onclick="showSection('admin')">Admin</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="wrap">
+
+        <!-- ================= BROWSE ================= -->
+        <section id="browse-section" class="section active">
+          <div class="sec-head">
+            <span class="label">Biblioteca</span>
+            <h2 class="h-display">Browse Books</h2>
+            <p class="lede">Pa los que se niegan a pagar</p>
+            <a class="btn-jump" href="#student-tools-section">Herramientas Estudiantiles <span>&#8595;</span></a>
+            <p class="hint">Las herramientas se encuentran al final de la página. Para llegar a ellas más rápido usa el botón.</p>
+          </div>
+
+          <div class="toolbar">
+            <label class="search"><span>[ buscar ]</span><input id="searchInput" type="search" placeholder="título, autor, materia…" autocomplete="off" /></label>
+            <span class="count" id="resultCount"></span>
+          </div>
+          <p class="note">📦 Los libros grandes pueden tardar un rato en abrir después de descargarlos. Es normal, están funcionando, solo dale tiempo al visor de PDF. Con <b>Leer</b> abren al instante.</p>
+
+          <div id="files-list" class="shelf"></div>
+          <div class="loading" id="loading"><div class="loading-spinner"></div><span>CARGANDO LIBROS…</span></div>
+
+          <!-- ================= TOOLS ================= -->
+          <div id="student-tools-section" class="sec-head tools-head">
+            <span class="label">Herramientas</span>
+            <h2 class="h-display">Herramientas Para Estudiantes</h2>
+            <p class="lede">Student Tools</p>
+          </div>
+
+          <div class="tool-groups">
+            <div class="panel">
+              <h3 class="panel-title">✅ Lo Importante</h3>
+              <div class="toollist">
+                <a class="tool" href="https://www.uprag.edu/calendario-academico-3/" target="_blank" rel="noopener noreferrer">Calendario Académico 2026</a>
+                <a class="tool" href="https://studentaid.gov/h/apply-for-aid/fafsa" target="_blank" rel="noopener noreferrer">FAFSA (Beca)</a>
+                <a class="tool" href="https://notaso.com/" target="_blank" rel="noopener noreferrer">Busca Si Tu Profe Es Bueno</a>
+                <a class="tool" href="https://ibb.co/cKVJDY4y" target="_blank" rel="noopener noreferrer">Grupo WhatsApp Libros UPRAG</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">💸 Más Becas (Scholarships)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://bold.org/" target="_blank" rel="noopener noreferrer">Bold.org</a>
+                <a class="tool" href="https://scholarships360.org/" target="_blank" rel="noopener noreferrer">Scholarships360</a>
+                <a class="tool" href="https://scholarshiproar.com/" target="_blank" rel="noopener noreferrer">Scholarship Roar</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">🤑 Beneficios de Estudiantes (Student Deals)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://freeforstudents.org/row" target="_blank" rel="noopener noreferrer">Free For Students</a>
+                <a class="tool" href="https://www.myunidays.com/GB/en-GB" target="_blank" rel="noopener noreferrer">Deals For Students</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">📚 Pa que no te cuelgues (Study Smarter)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://open.spotify.com/album/52FJKyr5sAqiA6nZah9dLz?si=EG94Ec9ZQ-KMtNjUZUP_cQ" target="_blank" rel="noopener noreferrer">My Study Playlist</a>
+                <a class="tool" href="https://notebooklm.google/" target="_blank" rel="noopener noreferrer">Best Study Tool Ever (NotebookLM)</a>
+                <a class="tool" href="https://quillbot.com/" target="_blank" rel="noopener noreferrer">Quillbot (Plagiarism / AI Check)</a>
+                <a class="tool" href="https://apps.ankiweb.net/" target="_blank" rel="noopener noreferrer">Anki (Best Flash Cards)</a>
+                <a class="tool" href="https://obsidian.md/" target="_blank" rel="noopener noreferrer">Obsidian (Note Taking)</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">🧬 Biología / Biomedicina</h3>
+              <div class="toollist">
+                <a class="tool" href="https://www.innerbody.com/htm/body.html" target="_blank" rel="noopener noreferrer">Anatomía</a>
+                <a class="tool" href="https://3d.nih.gov/discover" target="_blank" rel="noopener noreferrer">Modelos 3D Medicina</a>
+                <a class="tool" href="https://www.cram.com/medical" target="_blank" rel="noopener noreferrer">Flash Cards Medicina</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">🧪 Química (Chemistry)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://chemistrytalk.org/" target="_blank" rel="noopener noreferrer">Chemistrytalk.org</a>
+                <a class="tool" href="https://www.organic-chemistry.org/" target="_blank" rel="noopener noreferrer">Organic Chemistry Portal</a>
+                <a class="tool" href="https://www.chemtube3d.com/" target="_blank" rel="noopener noreferrer">Modelos 3D Química Orgánica Interactivos</a>
+                <a class="tool" href="https://www.chemspider.com/" target="_blank" rel="noopener noreferrer">Estructuras Químicas</a>
+                <a class="tool" href="https://phet.colorado.edu/en/simulations/filter?subjects=chemistry&type=html" target="_blank" rel="noopener noreferrer">Simulaciones Químicas</a>
+              </div>
+            </div>
+          </div>
+
+          <p class="center" style="margin-top:36px"><a class="btn-jump" href="#browse-section">Volver Arriba <span>&#8593;</span></a></p>
+        </section>
+
+        <!-- ================= UPLOAD ================= -->
+        <section id="upload-section" class="section">
+          <div class="sec-head">
+            <span class="label">Subir</span>
+            <h2 class="h-display">Upload Book</h2>
+            <p class="lede">Comparte pana no seas maceta :) &nbsp;Solo se permiten libros en PDF, EPUB o MOBI.</p>
+            <p class="hint">🚨 Para la mejor experiencia, abre la página en computadora 🚨</p>
+          </div>
+
+          <div class="info-box">
+            <b>Formatos:</b> PDF, EPUB, MOBI &nbsp;·&nbsp; <b>Tamaño máximo:</b> 2 GB &nbsp;·&nbsp; Al escoger el archivo, la página intenta sacar el título, autor y edición automáticamente. Revísalos antes de subir.
+            <div class="links">
+              <span class="muted">EPUB y MOBI necesitan una app lectora:</span>
+              <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.books&hl=en_US" target="_blank" rel="noopener noreferrer">📱 Google Play Books</a>
+              <a href="https://apps.apple.com/us/app/apple-books/id364709193" target="_blank" rel="noopener noreferrer">🍎 Apple Books</a>
+              <a href="https://epub-reader.online/" target="_blank" rel="noopener noreferrer">💻 Online Reader</a>
+            </div>
+          </div>
+
+          <div class="panel" style="max-width:860px;margin:0 auto">
+            <div class="panel-title">Nuevo libro</div>
+            <form id="uploadForm" enctype="multipart/form-data">
+              <div class="form-grid">
+                <div class="field full">
+                  <label for="file">Archivo</label>
+                  <input type="file" id="file" name="file" required accept=".pdf,.epub,.mobi" />
                 </div>
-                <nav class="nav">
-                    <button class="nav-btn active" onclick="showSection('browse')">Browse Books</button>
-                    <button class="nav-btn" onclick="showSection('upload')">Upload Book</button>
-                    <button class="nav-btn" onclick="showSection('about')">About</button>
-                    <button class="nav-btn" onclick="showSection('admin')">Admin</button>
-                </nav>
+                <div class="field">
+                  <label for="fileName">Título</label>
+                  <input type="text" id="fileName" name="fileName" required placeholder="Título del libro" maxlength="200" />
+                </div>
+                <div class="field">
+                  <label for="author">Autor</label>
+                  <input type="text" id="author" name="author" placeholder="Autor(es)" maxlength="200" />
+                </div>
+                <div class="field">
+                  <label for="edition">Edición</label>
+                  <input type="text" id="edition" name="edition" placeholder="ej. 5th ed." maxlength="60" />
+                </div>
+                <div class="field">
+                  <label for="year">Año</label>
+                  <input type="number" id="year" name="year" placeholder="ej. 2021" min="1400" max="2100" />
+                </div>
+                <div class="field full">
+                  <label for="description">Nota (opcional)</label>
+                  <textarea id="description" name="description" placeholder="Algo útil pa los demás: para qué clase es, si es la edición que pide el profe, etc."></textarea>
+                </div>
+              </div>
+
+              <div id="metaPreview" class="meta-preview hidden"></div>
+
+              <div id="uploadProgress" class="upload-progress hidden">
+                <div class="progress-info">
+                  <span class="progress-label">Subiendo…</span>
+                  <span class="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+                <div class="progress-details"><span class="file-name"></span><span class="file-size"></span></div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="uploadBtn">Subir libro</button>
+                <button type="reset" class="btn btn-ghost" id="resetBtn">Limpiar</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- ================= ABOUT ================= -->
+        <section id="about-section" class="section">
+          <div class="sec-head">
+            <span class="label">About</span>
+            <h2 class="h-display">About CoraBooks</h2>
+            <p class="lede">La necesidad es la madre de la inovacion...y aqui se necesita mucho💀</p>
+          </div>
+          <div class="panel about-card">
+            <img src="bookcat.png" alt="CoraBooks Cat" class="about-cat" />
+            <p>🚨 Para la mejor experiencia, abre la página en computadora 🚨</p>
+            <p>Esta página está hecha con el propósito de que estudiantes puedan compartir y acceder a libros de manera gratuita. A ver si la beca sobra pa algo</p>
+            <p>La página todavía está en constante desarollo, y con el tiempo se continuarán añadiendo más libros y funcionalidades.</p>
+            <p>Por la pagina estar en constante desarollo, aunque no es lo comun, es possible que aveces se encuentre un error al intentar subir o descargar los libros, Esto es a causa de posible mantenimiento. Si consigue algun error mientras usa la pagina, intente usar la pagina un tiempo despues y el problema debe estar resuelto. Al error durar mas de un dia o no querer subir o bajar el libro a la pagina tu mismo, puedes contactarme por el email de la pagina para pedir un libro o para someter uno que quieras subir.</p>
+            <p>Algún problema con la página, sugerencia o libro que quiera que añada, me puedes contactar aquí: corabooks67@gmail.com</p>
+          </div>
+        </section>
+
+        <!-- ================= ADMIN ================= -->
+        <section id="admin-section" class="section">
+          <div class="sec-head">
+            <span class="label">Admin</span>
+            <h2 class="h-display">Admin Dashboard</h2>
+            <p class="lede">Aqui no bro</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Acceso</div>
+            <div class="admin-row">
+              <div class="field">
+                <label for="adminKeyInput">Admin key</label>
+                <input type="password" id="adminKeyInput" placeholder="Enter admin key" autocomplete="off" />
+              </div>
+              <button id="adminLoginBtn" class="btn btn-primary" type="button">Unlock</button>
+              <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Lock</button>
             </div>
-        </header>
+            <div id="adminStatus" class="muted" style="margin-top:10px"></div>
+          </div>
 
-        <!-- Main Content -->
-        <main class="main">
-            <div class="container">
-
-                <!-- Browse Books Section -->
-                <section id="browse-section" class="section active">
-                    <div class="section-header">
-                        <h2>Browse Books</h2>
-                        <p>Pa los que se niegan a pagar</p>
-                        <br><br>
-                        
-                        <div class="glow-btn-container">
-                            <a href="#student-tools-section">
-                                <button class="glow-btn">Herramientas Estudiantiles</button>
-                            </a>
-                        </div>
-                        <br><br>
-                        <h5>Las Herramientas Se Encuentran Al Final De La Página<br>Para Llegar A Ellas Mas Rápido Usa El Botón</h5>
-                    </div>
-                    <p class="reader-note">📦 Los libros grandes pueden tardar un rato en abrir después de descargarlos. Es normal, están funcionando, solo dale tiempo al visor de PDF.</p>
-                    <div id="files-list" class="books-grid">
-                        <!-- Books will be loaded here dynamically -->
-                    </div>
-                    <div class="loading" id="loading">
-                        <div class="loading-spinner"></div>
-                        <span>Loading books...</span>
-                    </div>
-                    
-                    <!-- Bottom Page Buttons -->
-                    <div id="student-tools-section" class="section-header">
-                        <h2>Herramientas Para Estudiantes</h2>
-                        <p>Student Tools</p>
-                    </div>
-                    <!-- General Section -->
-                    <h3 class="button-section-title">✅️Lo Importante✅️</h3>
-                    <div class="cool-container">
-                        <a href="https://www.uprag.edu/calendario-academico-3/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Calendario Academico 2026</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://studentaid.gov/h/apply-for-aid/fafsa" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">FAFSA (BECA)</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://notaso.com/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Busca Si Tu Profe Es Bueno</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://ibb.co/cKVJDY4y" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Grupo Whatsapp Libros UPRAG</button>
-                        </a>
-                    </div>
-                    <!-- More Scholarships Section -->
-                    <h3 class="button-section-title">💸Mas Becas💸<br>(Scholarships)</h3>
-                    
-                    <div class="cool-container">
-                        <a href="https://bold.org/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Bold.org</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://scholarships360.org/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Scholarships360</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://scholarshiproar.com/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Scholarship Roar</button>
-                        </a>
-                    </div>
-                    
-                    <!-- Student Deals Section -->
-                    <h3 class="button-section-title">🤑Beneficios de Estudiantes🤑<br>(Student Deals)</h3>
-                    <div class="cool-container">
-                        <a href="https://freeforstudents.org/row" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Free For Students</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://www.myunidays.com/GB/en-GB" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Deals For Students</button>
-                        </a>
-                    </div>
-                    
-                    <!-- Study Tools Section -->
-                    <h3 class="button-section-title">📚Pa que no te cuelges📚<br>(Study Smarter Not Harder)</h3>
-                    <div class="cool-container">
-                        <a href="https://open.spotify.com/album/52FJKyr5sAqiA6nZah9dLz?si=EG94Ec9ZQ-KMtNjUZUP_cQ" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">My Study Playlist</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://notebooklm.google/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Best Study Tool Ever</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://quillbot.com/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Quillbot (Plagarism / AI Check)</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://apps.ankiweb.net/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Anki (Best Flash Cards)</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://obsidian.md/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Obsidian (Note Taking)</button>
-                        </a>
-                    </div>
-                    <!-- Biology/ Biomed Section -->
-                    <h3 class="button-section-title">🧬Biologia / Biomedicina🧬<br>(Biology / Biomedicine)</h3>
-                    <div class="cool-container">
-                        <a href="https://www.innerbody.com/htm/body.html" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Anatomia</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://3d.nih.gov/discover" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Modelos 3D Medicina </button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://www.cram.com/medical" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Flash Cards Medicina</button>
-                        </a>
-                    </div>
-                    <!-- Student Deals Section -->
-                    <h3 class="button-section-title">🧪Química🧪<br>(Chemistry)</h3>
-                    <div class="cool-container">
-                        <a href="https://chemistrytalk.org/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Chemistrytalk.org</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://www.organic-chemistry.org/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Organic Chemistry Portal</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://www.chemtube3d.com/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Modelos 3D Química Orgánica Interactivos</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://www.chemspider.com/" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Estructuras Químicas</button>
-                        </a>
-                    </div>
-                    <div class="cool-container">
-                        <a href="https://phet.colorado.edu/en/simulations/filter?subjects=chemistry&type=html" target="_blank" rel="noopener noreferrer">
-                            <button class="cool-btn">Simulaciones Químicas</button>
-                        </a>
-                    </div>
-                    <!-- Back to Top Button -->
-                    <div class="glow-btn-container" style="margin-top: 3rem; margin-bottom: 2rem;">
-                        <a href="#browse-section">
-                            <button class="glow-btn no-triangle">Volver Arriba</button>
-                        </a>
-                    </div>
-                    
-                    <!-- Stream Embed -->
-                    <!-- <div class="stream-wrapper">
-                        <div class="stream-container">
-                            <iframe id="player" marginheight="0" marginwidth="0" src="https://ntvstream.cx/embed?t=RnBicEVST3ZWdWxIOTdKVHE4MlUydFlKR00weWtLd1orQ21LeUtTNTVuQTVya2dyQzFDbWhUMzc2Tk42MzRpem9hS1ZSVm85UzQ4M2l6QWRCR2wzaFE4SURVMElqVnMzK3dSOStpNDdWdlhxSmFXOVVSTEtKcW1YZGhLSFRFeHo~" scrolling="no" allowfullscreen="yes" allow="encrypted-media; picture-in-picture;" frameborder="0" ></iframe>
-                        </div>
-                    </div> -->
-                </section>
-
-                <!-- Upload Section -->
-                <section id="upload-section" class="section">
-                    <div class="section-header">
-                        <h2>Upload New Book</h2>
-                        <p>Comparte pana no seas maceta :) <br> Solo se permiten libros en PDF, EPUB o MOBI.</p>
-                        <br> <br>
-                        <p>🚨 Para la mejor experiencia, abre la pagina en computadora 🚨 </p>
-                    </div>
-                    
-                    <!-- File Upload Info -->
-                    <div class="info-banner">
-                        <div class="info-content">
-                            <h4>📋 Upload Information</h4>
-                            <div class="upload-info">
-                                <div class="info-item">
-                                    <strong>📁 Supported Formats:</strong> PDF, EPUB, MOBI
-                                </div>
-                                <div class="info-item">
-                                    <strong>📏 Maximum File Size:</strong> 2 GB is the maximum allowed file size.
-                                </div>
-                                <div class="info-item">
-                                    <strong>📖 eBook Formats:</strong> EPUB and MOBI files need special reader apps:
-                                    <div class="reader-links">
-                                        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.books&hl=en_US" target="_blank" class="reader-link">
-                                            📱 Google Play Books
-                                        </a>
-                                        <a href="https://apps.apple.com/us/app/apple-books/id364709193" target="_blank" class="reader-link">
-                                            🍎 Apple Books
-                                        </a>
-                                        <a href="https://epub-reader.online/" target="_blank" class="reader-link">
-                                            💻 Online Reader
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="upload-card">
-                        <form id="uploadForm" enctype="multipart/form-data" class="upload-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="fileName">Book Title</label>
-                                    <input type="text" id="fileName" name="fileName" required placeholder="Enter the book title">
-                                </div>
-                                <div class="form-group">
-                                    <label for="file">Select File</label>
-                                    <input type="file" id="file" name="file" required accept=".pdf,.epub,.mobi">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="description">Description</label>
-                                <textarea id="description" name="description" required placeholder="Describe the book content..."></textarea>
-                            </div>
-                            
-                            <!-- Cover input removed: covers are auto-generated from the first page of PDFs -->
-                            
-                            <!-- Progress Bar -->
-                            <div id="uploadProgress" class="upload-progress hidden">
-                                <div class="progress-info">
-                                    <span class="progress-label">Uploading...</span>
-                                    <span class="progress-percentage">0%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill"></div>
-                                </div>
-                                <div class="progress-details">
-                                    <span class="file-name"></span>
-                                    <span class="file-size"></span>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn-primary" id="uploadBtn">
-                                    Upload Book
-                                </button>
-                                <button type="reset" class="btn-secondary">
-                                    Clear Form
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </section>
-
-                <!-- About Section -->
-                <section id="about-section" class="section">
-                    <div class="section-header">
-                        <h2>About CoraBooks</h2>
-                        <p>La necesidad es la madre de la inovacion...y aqui se necesita mucho💀</p>
-                    </div>
-                    <div class="about-content">
-                        <div class="about-main-card about-main-card-centered">
-                            <div class="about-icon">
-                                <img src="bookcat.png" alt="CoraBooks Cat" class="about-cat-image">
-                            </div>
-                            <div class="about-text">
-                                <p>🚨 Para la mejor experiencia, abre la página en computadora 🚨 </p>
-
-                                <p>Esta página está hecha con el propósito de que estudiantes puedan compartir y acceder a libros de manera gratuita. A ver si la beca sobra pa algo</p>
-
-                                <p>La página todavía está en constante desarollo, y con el tiempo se continuarán añadiendo más libros y funcionalidades.</p>
-
-                                <p>Por la pagina estar en constante desarollo, aunque no es lo comun, es possible que aveces se encuentre un error al intentar subir o descargar los libros, Esto es a causa de posible mantenimiento. Si consigue algun error mientras usa la pagina, intente usar la pagina un tiempo despues y el problema debe estar resuelto. Al error durar mas de un dia o no querer subir o bajar el libro a la pagina tu mismo, puedes contactarme por el email de la pagina para pedir un libro o para someter uno que quieras subir. </p>
-
-                                <p>Algún problema con la página, sugerencia o libro que quiera que añada, me puedes contactar aquí: corabooks67@gmail.com</p>
-                            </div>
-                        <!-- </div>
-                        <p style="text-align: center; color: var(--text-secondary); margin-top: 2rem;">UPDATE LOG 15/1/2026</p>
-                        <div class="about-main-card" style="padding: 1.5rem;">
-                            <div class="about-text">
-                                <p>- Se añadio un area con herramientas en la pagina principal, para el beneficio de los estudiantes.</p>
-                                <p>- Se mejoró el servidor, ahora con mas espacio, y mas capacidad de descargas y subidas diarias</p>
-                            </div>
-                        </div> -->
-                        
-                    </div>
-                </section>
-
-                <!-- Admin Section -->
-                <section id="admin-section" class="section">
-                    <div class="section-header">
-                        <h2>Admin Dashboard</h2>
-                        <p>Aqui no bro</p>
-                    </div>
-                    <div class="upload-card">
-                        <div class="form-row">
-                            <div class="form-group" style="flex:2;">
-                                <label for="adminKeyInput">Admin Key</label>
-                                <input type="password" id="adminKeyInput" placeholder="Enter admin key" />
-                            </div>
-                            <div class="form-group" style="align-self:flex-end;">
-                                <button id="adminLoginBtn" class="btn-primary" type="button">Unlock</button>
-                                <button id="adminLogoutBtn" class="btn-secondary" type="button">Lock</button>
-                            </div>
-                        </div>
-                        <div id="adminStatus" class="muted" style="margin-top:.25rem"></div>
-                        <div id="adminCleanupControls" class="hidden">
-                            <hr style="border-color: var(--border-color); margin: 1rem 0; opacity:.4;" />
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="cleanupThreshold">Cleanup threshold (hours)</label>
-                                    <input type="number" id="cleanupThreshold" min="1" step="1" value="6" />
-                                </div>
-                                <div class="form-group" style="align-self:flex-end;">
-                                    <button id="adminCleanupBtn" class="btn-outline" type="button">Cleanup Pending</button>
-                                </div>
-                            </div>
-                            <div id="adminCleanupResult" class="muted" style="margin-top:.25rem"></div>
-                        </div>
-                    </div>
-
-                    <div class="books-grid" id="adminFilesGrid" style="margin-top:1rem">
-                        <!-- Admin file cards -->
-                    </div>
-                </section>
+          <div id="adminTools" class="hidden">
+            <div class="panel" style="margin-top:16px">
+              <div class="panel-title">Mantenimiento</div>
+              <div class="admin-row">
+                <div class="field" style="flex:0 1 220px">
+                  <label for="cleanupThreshold">Cleanup threshold (horas)</label>
+                  <input type="number" id="cleanupThreshold" min="1" step="1" value="6" />
+                </div>
+                <button id="adminCleanupBtn" class="btn" type="button">Cleanup pending</button>
+                <button id="adminEnrichBtn" class="btn" type="button">Completar datos de todos</button>
+              </div>
+              <div id="adminCleanupResult" class="progress-line"></div>
             </div>
-        </main>
 
-        <!-- Notification Container -->
-        <div id="notificationContainer" class="notification-container"></div>
-        <!-- ASCII art footer (appears only at page end) -->
-        <footer class="ascii-footer" aria-hidden="true">
-            <pre id="asciiCat">⠀⠀⠀   ⠀⠀⣀⣴⣖⠒⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢤⣄
+            <div class="panel" style="margin-top:16px">
+              <div class="panel-title">Libros</div>
+              <div class="admin-row">
+                <div class="field"><label for="adminSearch">Filtrar</label><input type="text" id="adminSearch" placeholder="título, autor, archivo…" /></div>
+              </div>
+              <div class="admin-list" id="adminFilesGrid"></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <!-- ASCII art footer (appears only at page end) -->
+    <footer class="ascii-footer" aria-hidden="true">
+      <pre id="asciiCat">⠀⠀⠀   ⠀⠀⣀⣴⣖⠒⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢤⣄
 ⠀⠀⠀⠀⣠⠞⠁⠑⠼⠃⢮⠇⠹⡄⠀⠀⠀⠀⠀⢀⣠⠴⢋⡡⠔⠒⠊⠈⣦⠀
 ⠀⠀⢀⡴⠃⠀⢠⠒⠒⡄⢠⢢⡀⡷⠀⠀⠀⣠⣶⠿⠗⠊⠁⠀⠀⠀⠀⠀⠈⣦
 ⠀⢀⡞⠀⠀⠀⠘⠶⠟⠁⠈⠉⢠⠃⣀⠴⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹
@@ -408,22 +295,20 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣀⣘
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣿
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⢉⣋</pre>
-        </footer>
+    </footer>
+  </div>
 
-
-        <!-- Preview removed; direct downloads only -->
-    </div>
-
-        <!-- PDF.js for client-side first-page thumbnail generation -->
-        <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-        <script>
-            if (window.pdfjsLib) {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-            }
-        </script>
-        <!-- JSZip for EPUB cover extraction -->
-        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-        <script src="script.js"></script>
+  <!-- PDF.js: cover thumbnails + reading page counts / metadata at upload -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    }
+  </script>
+  <!-- JSZip for EPUB cover extraction -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="common.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
 <!-- Mera canto de entrometio salgase de los devtools AHORA -->
