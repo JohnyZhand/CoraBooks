@@ -74,23 +74,11 @@
         width: '100%', height: '100%', flow: 'paginated', spread: narrow ? 'none' : 'auto', minSpreadWidth: 900,
         allowScriptedContent: false,
       });
-      // Paper: the book's own styling on a white page. Night: dark page, light default text,
-      // but the publisher's coloured boxes keep their own colours.
-      rendition.themes.register('paper', {
-        'html, body': { background: '#fbfbf8 !important' },
-        'body': { padding: '0 6px' },
-        'img, svg, image': { 'max-width': '100% !important', height: 'auto' },
-        'pre, code': { 'white-space': 'pre-wrap' },
-      });
-      rendition.themes.register('night', {
-        'html, body': { background: '#15152a !important', color: '#d8d8ea' },
-        'body': { padding: '0 6px' },
-        'a': { color: '#a78bfa' },
-        'img, svg, image': { 'max-width': '100% !important', height: 'auto' },
-        'pre, code': { 'white-space': 'pre-wrap' },
-      });
+      // Our own stylesheet is injected into every chapter document (now and as chapters load),
+      // which applies instantly and reliably. It also normalises text sizes, because many
+      // publishers size text in fixed pixels that epub.js's font-size setting cannot scale.
+      rendition.hooks.content.register((contents) => applyThemeTo(contents.document));
       applyTheme();
-      applyFont();
 
       await book.ready;
       const saved = localStorage.getItem(posKey);
@@ -183,19 +171,50 @@
     els.toc.value = String(pick.i);
   }
   function applyTheme() {
-    if (rendition) rendition.themes.select(theme);
-    els.viewer.classList.toggle('night', theme === 'night');
-    els.theme.textContent = theme === 'night' ? '\u2600' : '\u263D';
     try { localStorage.setItem('epub:theme', theme); } catch (e) {}
+    applyAll();
   }
   function onKey(e) {
     if (!rendition) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') rendition.next();
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') rendition.prev();
   }
+  function themeCss() {
+    const night = theme === 'night';
+    return [
+      `html { font-size: ${fontSize}% !important; }`,
+      `html, body { background: ${night ? '#15152a' : '#fbfbf8'} !important; }`,
+      `body { font-size: 1rem !important; padding: 0 6px; ${night ? 'color: #d8d8ea !important;' : ''} }`,
+      'p, li, dd, dt, td, th, blockquote, figcaption { font-size: 1rem !important; line-height: 1.6 !important; }',
+      'h1 { font-size: 2em !important; } h2 { font-size: 1.6em !important; } h3 { font-size: 1.3em !important; } h4, h5, h6 { font-size: 1.1em !important; }',
+      'sup, sub, small { font-size: 0.8em !important; }',
+      night ? 'a { color: #a78bfa !important; }' : '',
+      'img, svg, image { max-width: 100% !important; height: auto; }',
+      'pre, code { white-space: pre-wrap; }',
+    ].join('\n');
+  }
+  function applyThemeTo(doc) {
+    if (!doc || !doc.head) return;
+    let st = doc.getElementById('cb-theme');
+    if (!st) { st = doc.createElement('style'); st.id = 'cb-theme'; doc.head.appendChild(st); }
+    st.textContent = themeCss();
+  }
+  function applyAll() {
+    if (rendition) rendition.getContents().forEach(c => applyThemeTo(c.document));
+    els.viewer.classList.toggle('night', theme === 'night');
+    els.theme.textContent = theme === 'night' ? '\u2600' : '\u263D';
+  }
+  let fontTimer = null;
   function applyFont() {
-    if (rendition) rendition.themes.fontSize(fontSize + '%');
     try { localStorage.setItem('epub:fontSize', String(fontSize)); } catch (e) {}
+    if (!rendition) return;
+    // keep the reader's place: re-open the current position after the text reflows
+    const loc = rendition.currentLocation();
+    const cfi = loc && loc.start && loc.start.cfi;
+    applyAll();
+    clearTimeout(fontTimer);
+    fontTimer = setTimeout(() => { if (cfi) rendition.display(cfi).catch(() => {}); }, 60);
+    setStatus(`Letra ${fontSize}%`, true);
   }
 
   els.prev.addEventListener('click', () => rendition && rendition.prev());
