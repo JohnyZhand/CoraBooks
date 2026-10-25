@@ -28,9 +28,13 @@ async function ensureUploadLibs() {
 document.addEventListener('DOMContentLoaded', function () {
   loadFiles();
   setupEventListeners();
-  // Deep links like /#upload or /#about open that section
+  // Deep links like /#upload or /#about open that section once, then the hash is removed
+  // from the address bar so a refresh always comes back to the library.
   const hash = (location.hash || '').replace('#', '');
-  if (['upload', 'about'].includes(hash)) showSection(hash);
+  if (['upload', 'about'].includes(hash)) {
+    showSection(hash);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
 });
 
 function setupEventListeners() {
