@@ -320,7 +320,7 @@ img { max-width: 100%; display: block; }
 
 /* ---------- About ---------- */
 .about-card { max-width: 820px; margin: 0 auto; text-align: center; }
-.about-cat { width: 220px; margin: 0 auto 18px; filter: drop-shadow(0 0 18px var(--glow)); }
+.about-cat { width: 220px; height: auto; margin: 0 auto 18px; filter: drop-shadow(0 0 18px var(--glow)); }
 .about-card p { color: var(--muted); margin-bottom: 14px; text-align: left; }
 .about-card p:last-child { margin-bottom: 0; }
 
