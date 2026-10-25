@@ -2,6 +2,7 @@
 // Only allowed while the book is still pending (between /api/upload and /api/commit-upload),
 // so nobody can replace the cover of a published book. Image extensions only.
 import { COVER_EXTENSIONS, coverContentType, extensionOf } from '../../lib/files.js';
+import { b2PresignPut } from '../../lib/b2.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -22,19 +23,14 @@ export async function onRequest(context) {
     // Build a cover filename tied to the file id
     const coverName = `${id}.cover.${ext}`;
 
-    // Authorize and get upload URL
-    const auth = await b2Auth(env);
-    const upRes = await fetch(`${auth.apiUrl}/b2api/v2/b2_get_upload_url`, {
-      method: 'POST', headers: { 'Authorization': auth.authorizationToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ bucketId: env.B2_BUCKET_ID })
-    });
-    if (!upRes.ok) return json({ ok: false, message: 'Failed to get cover upload URL' }, 500);
-    const up = await upRes.json();
+    // Presigned S3 PUT for exactly this cover name (1 hour)
+    const uploadUrl = await b2PresignPut(env, coverName, 3600);
 
     // Save cover name on the record (does not mark ready)
     files[idx] = { ...files[idx], coverB2Name: coverName, coverContentType: coverContentType(coverName) };
     await env.CORABOOKS_KV.put('files', JSON.stringify(files));
 
-    return json({ ok: true, uploadUrl: up.uploadUrl, authorizationToken: up.authorizationToken, coverB2Name: coverName });
+    return json({ ok: true, uploadUrl, method: 'PUT', coverB2Name: coverName });
   } catch (e) {
     return json({ ok: false, message: e.message }, 500);
   }
@@ -42,8 +38,3 @@ export async function onRequest(context) {
 
 function cors() { return { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }; }
 function json(obj, status=200) { return new Response(JSON.stringify(obj), { status, headers: { ...cors(), 'Content-Type': 'application/json' } }); }
-async function b2Auth(env) {
-  const r = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', { headers: { Authorization: `Basic ${btoa(env.B2_APPLICATION_KEY_ID+":"+env.B2_APPLICATION_KEY)}` } });
-  if (!r.ok) throw new Error('B2 auth failed');
-  return await r.json();
-}

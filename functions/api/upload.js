@@ -1,9 +1,10 @@
-// Cloudflare Pages Function for generating Backblaze B2 upload URLs
-// Replaces POST /api/upload endpoint
+// Cloudflare Pages Function: registers a pending book and returns a presigned S3 PUT URL
+// (bound to that book's object name) for the browser to upload straight to Backblaze B2.
 
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeMeta } from '../../lib/meta.js';
 import { BOOK_EXTENSIONS, bookContentType, capString } from '../../lib/files.js';
+import { b2PresignPut } from '../../lib/b2.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -77,51 +78,13 @@ export async function onRequest(context) {
   const fileExtension = dotIdx > -1 ? sourceName.substring(dotIdx + 1).toLowerCase() : reqExt || 'pdf';
   const uniqueFilename = `${fileId}.${fileExtension}`;
     
-    // Get Backblaze B2 credentials from environment
-    const b2KeyId = env.B2_APPLICATION_KEY_ID;
-    const b2ApplicationKey = env.B2_APPLICATION_KEY;
-    const b2BucketId = env.B2_BUCKET_ID;
-    
-    if (!b2KeyId || !b2ApplicationKey || !b2BucketId) {
-      throw new Error(`Backblaze B2 credentials not configured. Missing: ${!b2KeyId ? 'KEY_ID ' : ''}${!b2ApplicationKey ? 'APP_KEY ' : ''}${!b2BucketId ? 'BUCKET_ID' : ''}`);
+    if (!env.B2_APPLICATION_KEY_ID || !env.B2_APPLICATION_KEY || !env.B2_BUCKET_NAME) {
+      throw new Error('Backblaze B2 credentials not configured');
     }
 
-    // Step 1: Authorize with B2
-    // Create the auth string
-    const authString = `${b2KeyId}:${b2ApplicationKey}`;
-    const base64Auth = btoa(authString);
-    const authResponse = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${base64Auth}`
-      }
-    });
-
-    if (!authResponse.ok) {
-      const errorText = await authResponse.text();
-      console.error('B2 Auth Error:', authResponse.status, errorText);
-      throw new Error(`Failed to authorize with Backblaze B2: ${authResponse.status} ${errorText}`);
-    }
-
-    const authData = await authResponse.json();
-
-    // Step 2: Get upload URL
-    const uploadUrlResponse = await fetch(`${authData.apiUrl}/b2api/v2/b2_get_upload_url`, {
-      method: 'POST',
-      headers: {
-        'Authorization': authData.authorizationToken,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        bucketId: b2BucketId
-      })
-    });
-
-    if (!uploadUrlResponse.ok) {
-      throw new Error('Failed to get B2 upload URL');
-    }
-
-    const uploadData = await uploadUrlResponse.json();
+    // Presigned S3 PUT bound to this one object name (1 hour). Replaces the native
+    // b2_get_upload_url token, which allowed uploading to any name in the bucket.
+    const uploadUrl = await b2PresignPut(env, uniqueFilename, 3600);
 
     // Store file metadata
     const fileMetadata = {
@@ -145,8 +108,8 @@ export async function onRequest(context) {
     console.log('Upload URL generated successfully for:', uniqueFilename);
 
     return new Response(JSON.stringify({
-      uploadUrl: uploadData.uploadUrl,
-      authorizationToken: uploadData.authorizationToken,
+      uploadUrl,
+      method: 'PUT',
       fileName: uniqueFilename,
       fileId: fileId,
       message: 'Upload URL generated successfully'

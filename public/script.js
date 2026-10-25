@@ -219,11 +219,11 @@ async function handleFileUpload(e) {
       body: JSON.stringify({ filename: fileName || file.name, originalFilename: file.name, description, meta, contentType: file.type || 'application/octet-stream', size: file.size }),
     });
     if (!uploadResponse.ok) { const err = await uploadResponse.json().catch(() => ({})); throw new Error(err.message || 'No se pudo pedir la URL de subida'); }
-    const { uploadUrl, authorizationToken, fileName: b2FileName, fileId } = await uploadResponse.json();
+    const { uploadUrl, fileName: b2FileName, fileId } = await uploadResponse.json();
     progressFill.style.width = '10%'; progressPercentage.textContent = '10%';
     progressLabel.textContent = 'Subiendo a Backblaze B2…';
 
-    const uploadResult = await uploadDirectToB2(uploadUrl, authorizationToken, b2FileName, file, (p) => {
+    const uploadResult = await uploadPresigned(uploadUrl, file, (p) => {
       const pct = Math.round(10 + p * 0.8);
       progressFill.style.width = `${pct}%`; progressPercentage.textContent = `${pct}%`;
     });
@@ -248,7 +248,8 @@ async function handleFileUpload(e) {
         if (cuRes.ok) {
           const cu = await cuRes.json();
           const coverFile = new File([coverBlob], cu.coverB2Name.split('/').pop() || 'cover.jpg', { type: 'image/jpeg' });
-          await uploadDirectToB2(cu.uploadUrl, cu.authorizationToken, cu.coverB2Name, coverFile, () => {});
+          const cr = await uploadPresigned(cu.uploadUrl, coverFile, () => {});
+          if (!cr.success) console.warn('Cover upload failed:', cr.message);
         }
       }
     } catch (err) { console.warn('Cover generation skipped:', err); }
@@ -283,8 +284,9 @@ async function handleFileUpload(e) {
   }
 }
 
-// Direct upload to Backblaze B2 using the uploadUrl (requires the bucket's CORS rules)
-function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progressCallback) {
+// Upload straight to Backblaze B2 with a presigned S3 PUT URL (bound to one object name).
+// Needs the bucket's CORS rule to allow s3_put from this origin.
+function uploadPresigned(uploadUrl, file, progressCallback) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.upload.addEventListener('progress', (ev) => { if (ev.lengthComputable) progressCallback((ev.loaded / ev.total) * 100); });
@@ -292,14 +294,11 @@ function uploadDirectToB2(uploadUrl, authorizationToken, fileName, file, progres
       if (xhr.status >= 200 && xhr.status < 300) resolve({ success: true });
       else { console.error('B2 upload failed:', xhr.status, xhr.responseText); resolve({ success: false, message: `La subida falló (${xhr.status})` }); }
     });
-    xhr.addEventListener('error', () => reject(new Error('Error de red durante la subida')));
+    xhr.addEventListener('error', () => reject(new Error('Error de red durante la subida (si pasa siempre, falta la regla CORS del bucket)')));
     xhr.addEventListener('timeout', () => reject(new Error('La subida tardó demasiado')));
-    xhr.open('POST', uploadUrl);
+    xhr.open('PUT', uploadUrl);
     xhr.timeout = 60 * 60 * 1000;
-    xhr.setRequestHeader('Authorization', authorizationToken);
-    xhr.setRequestHeader('X-Bz-File-Name', encodeURIComponent(fileName));
-    xhr.setRequestHeader('Content-Type', file.type || 'b2/x-auto');
-    xhr.setRequestHeader('X-Bz-Content-Sha1', 'do_not_verify');
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
     xhr.send(file);
   });
 }

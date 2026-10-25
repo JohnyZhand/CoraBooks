@@ -55,9 +55,9 @@ $corsRules = @(
   @{ 
     corsRuleName      = 'CoraBooksUploads'
     allowedOrigins    = @($Origin)
-    allowedHeaders    = @('Authorization','X-Bz-File-Name','X-Bz-Content-Sha1','Content-Type')
-    exposeHeaders     = @('x-bz-file-id','x-bz-content-sha1','x-bz-upload-timestamp')
-  allowedOperations = @('b2_upload_file','b2_download_file_by_name','b2_download_file_by_id')
+    allowedHeaders    = @('*')
+    exposeHeaders     = @('etag','x-amz-request-id','x-bz-file-id','x-bz-content-sha1','x-bz-upload-timestamp')
+  allowedOperations = @('s3_put','s3_get','s3_head','b2_upload_file','b2_download_file_by_name','b2_download_file_by_id')
     maxAgeSeconds     = 86400
   }
 )

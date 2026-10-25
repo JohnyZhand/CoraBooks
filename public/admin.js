@@ -62,6 +62,29 @@ async function initAdmin() {
   document.getElementById('adminLogoutBtn').onclick = adminLogout;
   document.getElementById('adminCleanupBtn').onclick = adminCleanup;
   document.getElementById('adminEnrichBtn').onclick = adminEnrichAll;
+  document.getElementById('adminCorsBtn').onclick = adminSetCors;
+}
+
+// Applies the bucket CORS rule that presigned S3 uploads need. Reports what B2 says.
+async function adminSetCors() {
+  if (!adminKey) return;
+  const btn = document.getElementById('adminCorsBtn');
+  const out = document.getElementById('adminCleanupResult');
+  btn.disabled = true; out.textContent = 'Aplicando regla CORS en el bucket…';
+  try {
+    const res = await fetch('/api/admin/b2-cors', { method: 'POST', headers: { 'x-admin-key': adminKey } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      out.textContent = `No se pudo: ${data.message || res.status}. ${data.hint || ''}`;
+      showNotification('error', 'CORS no aplicado', data.message || `HTTP ${res.status}`);
+      return;
+    }
+    const rule = (data.corsRules || [])[0] || {};
+    out.textContent = `CORS listo en ${data.s3ApiUrl || 'B2'}: operaciones ${(rule.allowedOperations || []).join(', ')} para ${(rule.allowedOrigins || []).join(', ')}. Tarda ~1 min en aplicar.`;
+    showNotification('success', 'CORS aplicado', 'Las subidas con URL firmada ya pueden funcionar');
+  } catch (e) {
+    out.textContent = 'Error: ' + e.message;
+  } finally { btn.disabled = false; }
 }
 
 async function adminLogin() {
