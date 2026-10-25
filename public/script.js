@@ -124,7 +124,7 @@ function displayFiles(filesToShow) {
                 </div>
                 ${file.size > BIG_FILE_BYTES ? `<div class="big-file-note" title="Después de descargarlo, el visor de PDF puede tardar un rato en mostrarlo. Usa Leer para abrirlo al instante.">📦 Libro grande: al descargarlo puede tardar en abrir</div>` : ''}
                 <div class="book-actions">
-                    ${isPdf(file) ? `<a class="btn btn-purple" href="/reader.html?id=${encodeURIComponent(file.id)}" title="Leer en el navegador sin descargar">Leer</a>` : ''}
+                    ${isPdf(file) ? `<a class="btn btn-purple" href="/reader?id=${encodeURIComponent(file.id)}" title="Leer en el navegador sin descargar">Leer</a>` : ''}
                     <button class="btn btn-outline" onclick="event.stopPropagation(); downloadFile('${file.id}')">
                         Download
                     </button>
