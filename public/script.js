@@ -117,6 +117,7 @@ function displayFiles(filesToShow) {
             </div>
             <div class="book-info">
                 <div class="book-title">${escapeHtml(file.filename)}</div>
+                ${file.description ? `<div class="book-description">${escapeHtml(file.description)}</div>` : ''}
                 <div class="book-meta">
                     <span class="file-size">${formatFileSize(file.size)}</span>
                     <span class="upload-date">${new Date(file.uploadedAt).toLocaleDateString()}</span>
@@ -212,6 +213,7 @@ async function handleFileUpload(e) {
             body: JSON.stringify({
                 filename: fileName || file.name,
                 originalFilename: file.name,
+                description: description,
                 contentType: file.type || 'application/octet-stream',
                 size: file.size
             })

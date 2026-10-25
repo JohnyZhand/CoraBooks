@@ -22,7 +22,9 @@ export async function onRequest(context) {
   }
 
   try {
-  const { filename, originalFilename, contentType, size } = await request.json();
+  const { filename, originalFilename, description, contentType, size } = await request.json();
+  // Optional free-text description shown on the book card (trimmed, capped)
+  const cleanDescription = typeof description === 'string' ? description.trim().slice(0, 1000) : '';
     
     // Enforce allowed file types: PDF, EPUB, MOBI
     const allowedExt = ['pdf', 'epub', 'mobi'];
@@ -67,37 +69,14 @@ export async function onRequest(context) {
     const b2ApplicationKey = env.B2_APPLICATION_KEY;
     const b2BucketId = env.B2_BUCKET_ID;
     
-    console.log('Environment variables check:', {
-      B2_APPLICATION_KEY_ID: b2KeyId ? `${b2KeyId.substring(0, 10)}...` : 'MISSING',
-      B2_APPLICATION_KEY: b2ApplicationKey ? `${b2ApplicationKey.substring(0, 10)}...` : 'MISSING',
-      B2_BUCKET_ID: b2BucketId ? `${b2BucketId.substring(0, 10)}...` : 'MISSING',
-      allEnvKeys: Object.keys(env)
-    });
-    
     if (!b2KeyId || !b2ApplicationKey || !b2BucketId) {
       throw new Error(`Backblaze B2 credentials not configured. Missing: ${!b2KeyId ? 'KEY_ID ' : ''}${!b2ApplicationKey ? 'APP_KEY ' : ''}${!b2BucketId ? 'BUCKET_ID' : ''}`);
     }
 
     // Step 1: Authorize with B2
-    console.log('B2 Credentials check:', {
-      hasKeyId: !!b2KeyId,
-      hasAppKey: !!b2ApplicationKey,
-      hasBucketId: !!b2BucketId,
-      keyIdLength: b2KeyId?.length,
-      appKeyLength: b2ApplicationKey?.length,
-      keyIdPrefix: b2KeyId ? b2KeyId.substring(0, 8) : 'MISSING',
-      appKeyPrefix: b2ApplicationKey ? b2ApplicationKey.substring(0, 8) : 'MISSING'
-    });
-
     // Create the auth string
     const authString = `${b2KeyId}:${b2ApplicationKey}`;
     const base64Auth = btoa(authString);
-    console.log('Auth details:', {
-      authStringLength: authString.length,
-      base64AuthLength: base64Auth.length,
-      base64Prefix: base64Auth.substring(0, 20)
-    });
-
     const authResponse = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', {
       method: 'GET',
       headers: {
@@ -136,6 +115,7 @@ export async function onRequest(context) {
       id: fileId,
       filename: filename, // display name from the form
       originalName: originalFilename || filename,
+      description: cleanDescription,
       contentType: contentType || 'application/octet-stream',
       size: size,
       uploadedAt: new Date().toISOString(),
