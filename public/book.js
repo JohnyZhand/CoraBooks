@@ -51,11 +51,11 @@
     $('stripSize').textContent = CB.formatSize(f.size);
 
     // Actions
-    const isPdf = CB.isPdf(f);
-    $('readBtn').href = `/reader?id=${encodeURIComponent(f.id)}`;
-    $('readBtn').classList.toggle('hidden', !isPdf);
+    const readable = fmt === 'PDF' || fmt === 'EPUB';
+    $('readBtn').href = (fmt === 'EPUB' ? '/epub?id=' : '/reader?id=') + encodeURIComponent(f.id);
+    $('readBtn').classList.toggle('hidden', !readable);
     $('downloadBtn').href = `/api/download/${encodeURIComponent(f.id)}`;
-    if (!isPdf) $('downloadBtn').classList.add('btn-primary');
+    if (!readable) $('downloadBtn').classList.add('btn-primary');
 
     // Spec sheet: only rows we actually have data for
     const rows = [];

@@ -91,3 +91,33 @@ body {
   .rtoolbar { gap: .35rem; padding: 0 .5rem; }
   .rpages { padding-left: 0; padding-right: 0; }
 }
+
+/* ---------- EPUB reader (epub.html) ---------- */
+.epub-body { overflow: hidden; }
+.rviewer {
+  position: fixed; top: var(--toolbar-h); bottom: 26px; left: 0; right: 0;
+  background: #0e0e1c;
+}
+.rviewer iframe { border: 0; }
+.rfoot {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; color: var(--text-secondary); letter-spacing: .08em;
+  background: var(--darker-bg); border-top: 1px solid var(--border-color);
+}
+.rprogress {
+  position: fixed; top: var(--toolbar-h); left: 0; right: 0; height: 3px; z-index: 8;
+  background: var(--card-bg); transition: opacity .4s;
+}
+.rprogress.done { opacity: 0; pointer-events: none; }
+.rprogress-fill { height: 100%; width: 0; background: var(--accent-purple); box-shadow: 0 0 8px var(--accent-purple); transition: width .2s; }
+.rselect {
+  max-width: 220px; height: 36px; padding: 0 .5rem;
+  border: 1px solid var(--border-color); border-radius: 2px;
+  background: var(--darker-bg); color: var(--text-primary); font: inherit; font-size: .85rem;
+}
+.rselect:focus { outline: none; border-color: var(--primary-purple); }
+@media (max-width: 640px) {
+  .rselect { max-width: 120px; font-size: .75rem; }
+  .rfoot { font-size: .65rem; }
+}

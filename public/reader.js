@@ -43,8 +43,9 @@
   // Title and file info (best effort; the PDF opens regardless)
   fetch('/api/files').then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
     const f = Array.isArray(list) ? list.find(function (x) { return x.id === id; }) : null;
+    if (f && /\.epub$/i.test(f.b2FileName || '')) { location.replace('/epub?id=' + encodeURIComponent(id)); return; }
     if (f) {
-      els.title.textContent = f.filename || f.originalName || 'Libro';
+      els.title.textContent = (f.meta && f.meta.title) || f.filename || f.originalName || 'Libro';
       document.title = els.title.textContent + ' - CoraBooks';
     }
   }).catch(function () {});

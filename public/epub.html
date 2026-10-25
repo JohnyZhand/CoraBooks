@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoraBooks - Lector EPUB</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="reader.css" />
+</head>
+<body class="epub-body">
+  <header class="rtoolbar">
+    <a class="rbtn rback" href="/" title="Volver a la biblioteca">&larr; <span class="rlabel">Biblioteca</span></a>
+    <a class="rbtn rback" id="rBookLink" href="/" title="Ficha del libro">&#9636; <span class="rlabel">Ficha</span></a>
+    <div class="rtitle" id="rTitle">Cargando&hellip;</div>
+    <div class="rpager">
+      <button class="rbtn" id="rPrev" title="Página anterior" aria-label="Página anterior">&#9664;</button>
+      <select class="rselect" id="rToc" aria-label="Capítulo"><option>Capítulos…</option></select>
+      <button class="rbtn" id="rNext" title="Página siguiente" aria-label="Página siguiente">&#9654;</button>
+    </div>
+    <div class="rzoom">
+      <button class="rbtn" id="rFontDown" title="Letra más pequeña" aria-label="Letra más pequeña">A&minus;</button>
+      <button class="rbtn" id="rFontUp" title="Letra más grande" aria-label="Letra más grande">A+</button>
+    </div>
+    <a class="rbtn rdownload" id="rDownload" href="#" title="Descargar el archivo">&#11015; <span class="rlabel">Descargar</span></a>
+  </header>
+
+  <div class="rstatus" id="rStatus">Descargando el libro&hellip;</div>
+
+  <div class="rprogress" id="rProgress"><div class="rprogress-fill" id="rProgressFill"></div></div>
+
+  <main class="rviewer" id="viewer"></main>
+  <div class="rfoot" id="rFoot"></div>
+
+  <div class="rerror hidden" id="rError">
+    <h2>No se pudo abrir el libro</h2>
+    <p id="rErrorMsg"></p>
+    <p><a class="rbtn" id="rErrorDownload" href="#">Descargar el archivo</a> &nbsp; <a class="rbtn" href="/">Volver a la biblioteca</a></p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+  <script src="ereader.js"></script>
+</body>
+</html>
