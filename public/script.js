@@ -122,7 +122,6 @@ function displayFiles(filesToShow) {
                     <span class="file-size">${formatFileSize(file.size)}</span>
                     <span class="upload-date">${new Date(file.uploadedAt).toLocaleDateString()}</span>
                 </div>
-                ${file.size > BIG_FILE_BYTES ? `<div class="big-file-note" title="Después de descargarlo, el visor de PDF puede tardar un rato en mostrarlo. Usa Leer para abrirlo al instante.">📦 Libro grande: al descargarlo puede tardar en abrir</div>` : ''}
                 <div class="book-actions">
                     ${isPdf(file) ? `<a class="btn btn-purple" href="/reader?id=${encodeURIComponent(file.id)}" title="Leer en el navegador sin descargar">Leer</a>` : ''}
                     <button class="btn btn-outline" onclick="event.stopPropagation(); downloadFile('${file.id}')">
@@ -133,9 +132,6 @@ function displayFiles(filesToShow) {
         </div>
     `).join('');
 }
-
-// Files above this size get a "big book" note on their card
-const BIG_FILE_BYTES = 200 * 1024 * 1024;
 
 function isPdf(file) {
     const name = file.b2FileName || file.originalName || file.filename || '';
