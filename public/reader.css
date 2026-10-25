@@ -96,9 +96,19 @@ body {
 .epub-body { overflow: hidden; }
 .rviewer {
   position: fixed; top: var(--toolbar-h); bottom: 26px; left: 0; right: 0;
-  background: #0e0e1c;
+  padding: 14px 18px; background: var(--darker-bg);
 }
+.rpage {
+  width: 100%; height: 100%; max-width: 1400px; margin: 0 auto;
+  background: #fbfbf8; border: 1px solid var(--border-color); border-radius: 3px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
+  overflow: hidden;
+}
+.rpage.night { background: #15152a; }
 .rviewer iframe { border: 0; }
+@media (max-width: 640px) {
+  .rviewer { padding: 6px; }
+}
 .rfoot {
   position: fixed; left: 0; right: 0; bottom: 0; height: 26px;
   display: flex; align-items: center; justify-content: center;

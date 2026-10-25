@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     title: $('rTitle'), status: $('rStatus'), progress: $('rProgress'), fill: $('rProgressFill'),
-    prev: $('rPrev'), next: $('rNext'), toc: $('rToc'), fontDown: $('rFontDown'), fontUp: $('rFontUp'),
+    prev: $('rPrev'), next: $('rNext'), toc: $('rToc'), fontDown: $('rFontDown'), fontUp: $('rFontUp'), theme: $('rTheme'),
     download: $('rDownload'), bookLink: $('rBookLink'), viewer: $('viewer'), foot: $('rFoot'),
     error: $('rError'), errorMsg: $('rErrorMsg'), errorDownload: $('rErrorDownload'),
   };
@@ -23,6 +23,8 @@
 
   let book = null, rendition = null;
   let fontSize = parseInt(localStorage.getItem('epub:fontSize') || '100', 10) || 100;
+  let theme = localStorage.getItem('epub:theme') === 'night' ? 'night' : 'paper';
+  let tocItems = []; // { label, href (spine href + fragment), file, frag }
   const posKey = 'epub:' + id + ':cfi';
   let statusTimer = null;
 
@@ -72,15 +74,22 @@
         width: '100%', height: '100%', flow: 'paginated', spread: narrow ? 'none' : 'auto', minSpreadWidth: 900,
         allowScriptedContent: false,
       });
-      rendition.themes.register('cb', {
-        'html, body': { background: '#0e0e1c !important', color: '#d8d8ea !important' },
-        'body': { 'line-height': '1.6', padding: '0 4px' },
-        'p, div, span, li, td, th, h1, h2, h3, h4, h5, h6': { color: '#d8d8ea' },
-        'a, a *': { color: '#a78bfa !important' },
+      // Paper: the book's own styling on a white page. Night: dark page, light default text,
+      // but the publisher's coloured boxes keep their own colours.
+      rendition.themes.register('paper', {
+        'html, body': { background: '#fbfbf8 !important' },
+        'body': { padding: '0 6px' },
         'img, svg, image': { 'max-width': '100% !important', height: 'auto' },
         'pre, code': { 'white-space': 'pre-wrap' },
       });
-      rendition.themes.select('cb');
+      rendition.themes.register('night', {
+        'html, body': { background: '#15152a !important', color: '#d8d8ea' },
+        'body': { padding: '0 6px' },
+        'a': { color: '#a78bfa' },
+        'img, svg, image': { 'max-width': '100% !important', height: 'auto' },
+        'pre, code': { 'white-space': 'pre-wrap' },
+      });
+      applyTheme();
       applyFont();
 
       await book.ready;
@@ -88,12 +97,19 @@
       await rendition.display(saved || undefined);
       if (saved) setStatus('Continuando donde lo dejaste', true); else setStatus('Listo', true);
 
-      // Chapters
+      // Chapters: TOC hrefs are written relative to the nav document, which often differs from
+      // how the spine names sections, so each entry is resolved to a spine section first.
       book.loaded.navigation.then(nav => {
         const items = [];
-        (function walk(list, depth) { (list || []).forEach(it => { items.push({ label: (depth ? '  '.repeat(depth) + '· ' : '') + (it.label || '').trim(), href: it.href }); walk(it.subitems, depth + 1); }); })(nav.toc, 0);
-        els.toc.innerHTML = '<option value="">Capítulos…</option>' + items.map(it => `<option value="${esc(it.href)}">${esc(it.label)}</option>`).join('');
-      }).catch(() => {});
+        (function walk(list, depth) { (list || []).forEach(it => { items.push({ depth, label: (it.label || '').trim(), raw: it.href || '' }); walk(it.subitems, depth + 1); }); })(nav.toc, 0);
+        tocItems = items.map(it => {
+          const [path, frag] = it.raw.split('#');
+          const sec = resolveSection(path);
+          return sec ? { label: (it.depth ? '  '.repeat(it.depth) + '· ' : '') + it.label, file: sec.href, frag: frag || '', href: sec.href + (frag ? '#' + frag : '') } : null;
+        }).filter(Boolean);
+        els.toc.innerHTML = '<option value="">Capítulos…</option>' + tocItems.map((it, i) => `<option value="${i}">${esc(it.label)}</option>`).join('');
+        syncToc(rendition.currentLocation());
+      }).catch((e) => console.warn('TOC failed', e));
 
       // Percentage through the book (computed in the background; big books take a moment)
       book.locations.generate(1200).then(() => updateFoot(rendition.currentLocation())).catch(() => {});
@@ -134,11 +150,43 @@
     if (loc.start.displayed && loc.start.displayed.total) bits.push(`pág. ${loc.start.displayed.page} de ${loc.start.displayed.total} del capítulo`);
     els.foot.textContent = bits.join(' · ');
   }
+  function resolveSection(path) {
+    if (!path) return null;
+    const clean = decodeURI(path).replace(/^(\.\.\/|\.\/)+/, '');
+    const direct = book.spine.get(clean) || book.spine.get(path);
+    if (direct) return direct;
+    // fall back to matching the tail of the spine href ("text/ch01.xhtml" vs "OEBPS/text/ch01.xhtml")
+    let found = null;
+    book.spine.each(sec => { if (!found && sec.href && (sec.href === clean || sec.href.endsWith('/' + clean) || clean.endsWith('/' + sec.href))) found = sec; });
+    if (!found) { const base = clean.split('/').pop(); book.spine.each(sec => { if (!found && sec.href && sec.href.split('/').pop() === base) found = sec; }); }
+    return found;
+  }
   function syncToc(loc) {
-    if (!loc || !loc.start || !loc.start.href) return;
-    const opts = Array.from(els.toc.options);
-    const match = opts.find(o => o.value && (o.value === loc.start.href || o.value.split('#')[0] === loc.start.href));
-    if (match) els.toc.value = match.value;
+    if (!loc || !loc.start || !loc.start.href || !tocItems.length) return;
+    const file = loc.start.href;
+    const candidates = tocItems.map((it, i) => ({ it, i })).filter(c => c.it.file === file);
+    if (!candidates.length) return;
+    let pick = candidates[0];
+    if (candidates.length > 1) {
+      // several entries in this file: choose the last one whose anchor sits at or before the current page
+      try {
+        const contents = rendition.getContents()[0];
+        const doc = contents && contents.document;
+        const width = contents ? contents.width() : 0;
+        for (const c of candidates) {
+          if (!c.it.frag) { pick = c; continue; }
+          const el = doc && doc.getElementById(c.it.frag);
+          if (el && el.getBoundingClientRect().left < width) pick = c;
+        }
+      } catch (e) { /* keep the first */ }
+    }
+    els.toc.value = String(pick.i);
+  }
+  function applyTheme() {
+    if (rendition) rendition.themes.select(theme);
+    els.viewer.classList.toggle('night', theme === 'night');
+    els.theme.textContent = theme === 'night' ? '\u2600' : '\u263D';
+    try { localStorage.setItem('epub:theme', theme); } catch (e) {}
   }
   function onKey(e) {
     if (!rendition) return;
@@ -154,7 +202,11 @@
   els.next.addEventListener('click', () => rendition && rendition.next());
   els.fontUp.addEventListener('click', () => { fontSize = Math.min(200, fontSize + 10); applyFont(); });
   els.fontDown.addEventListener('click', () => { fontSize = Math.max(60, fontSize - 10); applyFont(); });
-  els.toc.addEventListener('change', () => { if (rendition && els.toc.value) rendition.display(els.toc.value); });
+  els.toc.addEventListener('change', () => {
+    const it = tocItems[parseInt(els.toc.value, 10)];
+    if (rendition && it) rendition.display(it.href).catch(() => rendition.display(it.file));
+  });
+  els.theme.addEventListener('click', () => { theme = theme === 'night' ? 'paper' : 'night'; applyTheme(); });
   let resizeTimer = null;
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (rendition) rendition.resize(); }, 200); });
 
