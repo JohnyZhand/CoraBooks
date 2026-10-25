@@ -3,6 +3,12 @@ name = "corabooks"
 pages_build_output_dir = "public"
 compatibility_date = "2025-09-26"
 
+# KV binding for every environment (production AND branch previews).
+# [env.production] below keeps the explicit production binding.
+[[kv_namespaces]]
+id = "282de9a3368549c494f082ffe478efb6"
+binding = "CORABOOKS_KV"
+
 [env.production]
 compatibility_date = "2024-01-01"
 
