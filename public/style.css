@@ -435,35 +435,78 @@ img { max-width: 100%; display: block; }
     .book { grid-template-columns: 260px 1fr; gap: 28px; }
 }
 @media (max-width: 768px) {
+    :root { --topbar-h: 92px; }
     body { font-size: 13px; }
     .wrap { padding: 0 14px; }
-    .topbar-in { flex-wrap: wrap; gap: 8px 16px; padding: 10px 0; }
+
+    /* Top bar: brand row, then a full-width 4-column nav without brackets */
+    .topbar-in { flex-wrap: wrap; gap: 0; padding: 8px 0 0; min-height: 0; }
+    .brand { column-gap: 10px; padding-bottom: 6px; }
     .brand-tag { display: none; }
-    .brand-name { font-size: 28px; }
-    .brand-cat { width: 34px; height: 34px; }
+    .brand-name { font-size: 26px; }
+    .brand-cat { width: 32px; height: 32px; grid-row: 1; }
     .sysline { display: none; }
-    .nav { width: 100%; overflow-x: auto; gap: 0; scrollbar-width: none; }
-    .nav::-webkit-scrollbar { display: none; }
-    .nav-btn { padding: 8px 8px; font-size: 11px; flex-shrink: 0; }
-    .main { padding-top: 20px; }
-    .shelf { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 14px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .book { grid-template-columns: 1fr; gap: 22px; }
-    .book-cover-wrap { position: static; max-width: 230px; margin: 0 auto; }
-    .book-title { font-size: 36px; text-align: center; }
-    .book-author { text-align: center; }
-    .book-actions { justify-content: center; }
-    .book-actions .btn { flex: 1 1 140px; }
-    .spec-row { grid-template-columns: 110px 1fr; padding: 8px 12px; }
-    .arow { grid-template-columns: 48px 1fr; }
+    .nav { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; border-top: 1px solid var(--line); margin: 0 -14px; width: calc(100% + 28px); }
+    .nav-btn { padding: 10px 2px; font-size: 10px; letter-spacing: 0.1em; border: 0; border-bottom: 2px solid transparent; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nav-btn::before, .nav-btn::after { content: none; }
+    .nav-btn.active { background: transparent; border-bottom-color: var(--acc); }
+
+    /* Section heads: shorter, no hint, smaller jump button */
+    .main { padding: 18px 0 36px; }
+    .sec-head { margin-bottom: 14px; }
+    .h-display { font-size: 34px; margin: 4px 0 4px; }
+    .lede { font-size: 12px; }
+    .hint { display: none; }
+    .btn-jump { margin-top: 12px; padding: 9px 14px; font-size: 11px; letter-spacing: 0.12em; }
+    .sec-head.tools-head { margin-top: 36px; padding-top: 24px; }
+    .label { font-size: 10px; }
+
+    /* Browse */
+    .toolbar { padding: 8px 10px; margin: 4px 0 10px; gap: 8px; }
+    .search span { font-size: 11px; }
+    .search input { padding: 7px 9px; font-size: 13px; }
+    .count { display: none; }
+    .note { font-size: 11px; margin-bottom: 14px; line-height: 1.5; }
+    .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; margin-top: 4px; }
+    .tile-title { font-size: 12px; }
+    .tile-author { font-size: 10.5px; }
+    .tile-fmt { font-size: 9px; padding: 1px 5px; }
+
+    /* Panels, tools, forms */
+    .panel { padding: 14px; }
+    .panel-title { font-size: 11px; margin-bottom: 10px; }
+    .tool-groups { grid-template-columns: 1fr; gap: 12px; }
+    .tool { padding: 9px 10px; font-size: 12.5px; }
+    .info-box { padding: 12px 14px; font-size: 12px; margin-bottom: 14px; }
+    .form-grid { grid-template-columns: 1fr; gap: 12px; }
+    .btn { padding: 9px 14px; font-size: 11px; }
+    .about-cat { width: 150px; margin-bottom: 12px; }
+    .about-card p { font-size: 12.5px; }
+
+    /* Book page */
+    .book { grid-template-columns: 1fr; gap: 18px; margin-top: 14px; }
+    .book-cover-wrap { position: static; max-width: 210px; margin: 0 auto; }
+    .book-title { font-size: 30px; text-align: center; }
+    .book-author { text-align: center; font-size: 13px; margin-bottom: 14px; }
+    .book-actions { justify-content: center; margin-bottom: 18px; }
+    .book-actions .btn { flex: 1 1 140px; min-width: 0; }
+    .spec-row { grid-template-columns: 96px 1fr; padding: 8px 12px; font-size: 12.5px; }
+    .spec-row dt { font-size: 10px; }
+    .synopsis { font-size: 13px; }
+
+    /* Admin */
+    .arow { grid-template-columns: 48px 1fr; gap: 10px; padding: 8px 10px; }
     .arow .acts { grid-column: 1 / -1; }
+
     .notification-container { left: 14px; right: 14px; top: auto; bottom: 20px; }
     .notification { min-width: 0; max-width: none; }
-    .ascii-footer { padding: 16px 12px 12px 12px; }
-    #asciiCat { font-size: 11px; line-height: 1.1; }
+    .ascii-footer { padding: 16px 12px 12px 12px; overflow: hidden; max-width: 100%; }
+    #asciiCat { font-size: 10px; line-height: 1.1; }
 }
-@media (max-width: 420px) {
-    .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 360px) {
+    .brand-name { font-size: 23px; }
+    .nav-btn { font-size: 9px; }
+    .h-display { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
