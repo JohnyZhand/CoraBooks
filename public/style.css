@@ -127,7 +127,8 @@ img { max-width: 100%; display: block; }
     font-size: 11px; letter-spacing: 0.14em; color: var(--dim); text-transform: uppercase;
     display: flex; align-items: center; gap: 8px; white-space: nowrap;
 }
-.sysline .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); animation: pulse 2.4s ease-in-out infinite; }
+.sysline .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); animation: pulse 2.4s ease-in-out infinite; flex-shrink: 0; }
+.sys-short { display: none; }
 @keyframes pulse { 50% { opacity: 0.4; } }
 .nav { display: flex; gap: 4px; }
 .nav-btn {
@@ -445,7 +446,11 @@ img { max-width: 100%; display: block; }
     .brand-tag { display: none; }
     .brand-name { font-size: 26px; }
     .brand-cat { width: 32px; height: 32px; grid-row: 1; }
-    .sysline { display: none; }
+    /* compact status light on the brand row, top right */
+    .sysline { display: flex; margin-left: auto; align-self: center; padding-bottom: 6px; font-size: 9px; letter-spacing: 0.1em; gap: 6px; }
+    .sysline .dot { width: 6px; height: 6px; }
+    .sys-long { display: none; }
+    .sys-short { display: inline; }
     .nav { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; border-top: 1px solid var(--line); margin: 0 -14px; width: calc(100% + 28px); }
     .nav-btn { padding: 10px 2px; font-size: 10px; letter-spacing: 0.1em; border: 0; border-bottom: 2px solid transparent; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .nav-btn::before, .nav-btn::after { content: none; }

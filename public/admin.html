@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoraBooks - Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="wrap topbar-in">
+        <a class="brand" href="/">
+          <img src="/bookcat.png" class="brand-cat" alt="" />
+          <span class="brand-name">CORABOOKS<span class="cursor">_</span></span>
+          <span class="brand-tag">Admin</span>
+        </a>
+        <div class="sysline"><span class="dot"></span><span class="sys-long">SYS.ONLINE // ADMIN // </span><span class="sys-short">ONLINE // </span><span id="bookCount">--</span>&nbsp;LIBROS</div>
+        <nav class="nav">
+          <a class="nav-btn" href="/">Biblioteca</a>
+          <a class="nav-btn active" href="/admin">Admin</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="label">Admin</span>
+          <h2 class="h-display">Admin Dashboard</h2>
+          <p class="lede">Aqui no bro</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Acceso</div>
+          <div class="admin-row">
+            <div class="field">
+              <label for="adminKeyInput">Admin key</label>
+              <input type="password" id="adminKeyInput" placeholder="Enter admin key" autocomplete="off" />
+            </div>
+            <button id="adminLoginBtn" class="btn btn-primary" type="button">Unlock</button>
+            <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Lock</button>
+          </div>
+          <div id="adminStatus" class="muted" style="margin-top:10px"></div>
+        </div>
+
+        <div id="adminTools" class="hidden">
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-title">Mantenimiento</div>
+            <div class="admin-row">
+              <div class="field" style="flex:0 1 220px">
+                <label for="cleanupThreshold">Cleanup threshold (horas)</label>
+                <input type="number" id="cleanupThreshold" min="1" step="1" value="6" />
+              </div>
+              <button id="adminCleanupBtn" class="btn" type="button">Cleanup pending</button>
+              <button id="adminEnrichBtn" class="btn" type="button">Completar datos de todos</button>
+            </div>
+            <div id="adminCleanupResult" class="progress-line"></div>
+          </div>
+
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-title">Libros</div>
+            <div class="admin-row">
+              <div class="field"><label for="adminSearch">Filtrar</label><input type="text" id="adminSearch" placeholder="título, autor, archivo…" /></div>
+            </div>
+            <div class="admin-list" id="adminFilesGrid"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="notificationContainer" class="notification-container"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    }
+  </script>
+  <script src="/common.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
