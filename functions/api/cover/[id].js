@@ -5,13 +5,16 @@ import { b2DownloadByName } from '../../../lib/b2.js';
 import { coverContentType } from '../../../lib/files.js';
 
 export async function onRequest(context) {
-  const { env, params } = context;
+  const { env, params, request } = context;
   const fileId = params.id;
   const cors = { 'Access-Control-Allow-Origin': '*' };
   if (!/^[\w-]{1,64}$/.test(fileId || '')) return new Response('Not Found', { status: 404, headers: cors });
 
+  // ?v= is the cover's version (part of its stored name); a replaced cover gets a new URL,
+  // so each version can be cached for a year.
+  const version = (new URL(request.url).searchParams.get('v') || '').replace(/[^\w.-]/g, '').slice(0, 40);
   const cache = caches.default;
-  const cacheKey = new Request(`https://cache.internal/cover/${fileId}`, { method: 'GET' });
+  const cacheKey = new Request(`https://cache.internal/cover/${fileId}/${version || 'v0'}`, { method: 'GET' });
   try {
     const cached = await cache.match(cacheKey);
     if (cached) return cached;
@@ -34,7 +37,7 @@ export async function onRequest(context) {
     headers.set('Content-Type', type);
     headers.set('X-Content-Type-Options', 'nosniff');
     headers.set('Content-Disposition', 'inline');
-    headers.set('Cache-Control', 'public, max-age=86400, immutable');
+    headers.set('Cache-Control', version ? 'public, max-age=31536000, immutable' : 'public, max-age=86400');
     const resp = new Response(b2Resp.body, { status: 200, headers });
     try { context.waitUntil(cache.put(cacheKey, resp.clone())); } catch (e) { /* best-effort */ }
     return resp;

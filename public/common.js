@@ -371,6 +371,43 @@
   }
   function stripTags(s) { return String(s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); }
 
+  // ----- Cover images -----
+  const COVER_W = 480, COVER_H = 720; // 2:3, ~2x the largest tile the grid draws
+
+  // Resizes an image (Blob or canvas) to the cover size and encodes it as WebP when the
+  // browser can, otherwise JPEG. Returns { blob, ext }.
+  async function encodeCover(source) {
+    let canvas;
+    if (source instanceof HTMLCanvasElement) canvas = source;
+    else {
+      const bmp = await createImageBitmap(source);
+      canvas = document.createElement('canvas');
+      canvas.width = bmp.width; canvas.height = bmp.height;
+      canvas.getContext('2d').drawImage(bmp, 0, 0);
+      bmp.close && bmp.close();
+    }
+    const scale = Math.min(1, COVER_W / canvas.width, COVER_H / canvas.height);
+    if (scale < 1) {
+      const c2 = document.createElement('canvas');
+      c2.width = Math.round(canvas.width * scale); c2.height = Math.round(canvas.height * scale);
+      const ctx = c2.getContext('2d');
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(canvas, 0, 0, c2.width, c2.height);
+      canvas = c2;
+    }
+    const toBlob = (type, q) => new Promise(res => canvas.toBlob(res, type, q));
+    let blob = await toBlob('image/webp', 0.82);
+    if (blob && blob.type === 'image/webp') return { blob, ext: 'webp' };
+    blob = await toBlob('image/jpeg', 0.85);
+    return { blob, ext: 'jpg' };
+  }
+
+  // Cover URL for a record; the version keeps browser and edge caches honest when a cover is replaced.
+  function coverUrl(file) {
+    if (!file || !file.coverB2Name) return '';
+    return '/api/cover/' + encodeURIComponent(file.id) + '?v=' + encodeURIComponent(file.coverB2Name.replace(file.id + '.cover.', ''));
+  }
+
   // Reads page count and the PDF's own Title/Author. Accepts a File or a URL; with a URL only
   // small byte ranges are fetched, so this is cheap even for a 900 MB book. With
   // { thumbnail: maxDimension } it also renders page 1 to a JPEG Blob from the same read,
@@ -396,7 +433,7 @@
           const canvas = document.createElement('canvas');
           canvas.width = Math.floor(viewport.width); canvas.height = Math.floor(viewport.height);
           await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-          out.thumbnail = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+          out.thumbnail = await encodeCover(canvas); // { blob, ext }
         } catch (e) { console.warn('PDF thumbnail failed', e); }
       }
       return out;
@@ -410,5 +447,5 @@
     return t.length > 2 && t.length < 200 ? t : '';
   }
 
-  global.CB = { parseFilename, titleCase, bookTitle, bookAuthor, bookFormat, isPdf, formatSize, formatDate, escapeHtml, languageName, lookupBook, readPdfInfo };
+  global.CB = { parseFilename, titleCase, bookTitle, bookAuthor, bookFormat, isPdf, formatSize, formatDate, escapeHtml, languageName, lookupBook, readPdfInfo, encodeCover, coverUrl };
 })(window);

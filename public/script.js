@@ -104,11 +104,12 @@ function renderShelf() {
   }
   list.innerHTML = shown.map(file => {
     const title = CB.bookTitle(file), author = CB.bookAuthor(file), fmt = CB.bookFormat(file);
-    const coverSrc = file.coverB2Name ? `/api/cover/${file.id}` : (file.meta && file.meta.coverUrl) || '';
+    const coverSrc = CB.coverUrl(file) || (file.meta && file.meta.coverUrl) || '';
+    const i = shown.indexOf(file);
     return `
       <a class="tile" href="/book?id=${encodeURIComponent(file.id)}" title="${CB.escapeHtml(title)}">
         <div class="tile-cover${coverSrc ? '' : ' nocover'}">
-          <img src="${CB.escapeHtml(coverSrc)}" alt="" loading="lazy" onerror="this.parentElement.classList.add('nocover')" />
+          <img src="${CB.escapeHtml(coverSrc)}" alt="" width="480" height="720" loading="${i < 8 ? 'eager' : 'lazy'}"${i < 2 ? ' fetchpriority="high"' : ''} onerror="this.parentElement.classList.add('nocover')" />
           <div class="fallback">${fmt}</div>
           <span class="tile-fmt">${fmt}</span>
         </div>
@@ -139,8 +140,8 @@ async function onFileChosen(e) {
   if (/\.pdf$/i.test(file.name)) {
     try {
       await ensureUploadLibs();
-      pdfInfo = await CB.readPdfInfo(file, { thumbnail: 600 }); // one read: metadata, page count and cover
-      if (pdfInfo && pdfInfo.thumbnail) pendingCover = pdfInfo.thumbnail;
+      pdfInfo = await CB.readPdfInfo(file, { thumbnail: 720 }); // one read: metadata, page count and cover
+      if (pdfInfo && pdfInfo.thumbnail) pendingCover = pdfInfo.thumbnail; // { blob, ext }
     } catch (err) { console.warn('pdf info failed', err); }
     if (pdfInfo) {
       if (pdfInfo.title && isSparse(parsed.title)) setValue('fileName', pdfInfo.title);
@@ -238,20 +239,22 @@ async function handleFileUpload(e) {
 
     // Cover: the first PDF page rendered when the file was chosen, or the EPUB's cover image
     try {
-      let coverBlob = pendingCover;
-      if (!coverBlob) {
+      let cover = pendingCover; // { blob, ext }
+      if (!cover) {
         await ensureUploadLibs();
-        if (/\.pdf$/i.test(file.name) && window.pdfjsLib) { progressLabel.textContent = 'Generando portada…'; coverBlob = await generatePdfThumbnail(file, 600); }
-        else if (/\.epub$/i.test(file.name) && window.JSZip) { progressLabel.textContent = 'Extrayendo portada del EPUB…'; coverBlob = await extractEpubCover(file); }
+        let raw = null;
+        if (/\.pdf$/i.test(file.name) && window.pdfjsLib) { progressLabel.textContent = 'Generando portada…'; raw = await generatePdfThumbnail(file, 720); }
+        else if (/\.epub$/i.test(file.name) && window.JSZip) { progressLabel.textContent = 'Extrayendo portada del EPUB…'; raw = await extractEpubCover(file); }
+        if (raw) cover = await CB.encodeCover(raw); // resized + WebP when possible
       }
-      if (coverBlob) {
+      if (cover && cover.blob) {
         const cuRes = await fetch('/api/cover-upload', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: fileId, originalFilename: (fileName || file.name).replace(/\.[^./]+$/, '') + '.jpg', contentType: 'image/jpeg' }),
+          body: JSON.stringify({ id: fileId, originalFilename: 'cover.' + cover.ext }),
         });
         if (cuRes.ok) {
           const cu = await cuRes.json();
-          const coverFile = new File([coverBlob], cu.coverB2Name.split('/').pop() || 'cover.jpg', { type: 'image/jpeg' });
+          const coverFile = new File([cover.blob], 'cover.' + cover.ext, { type: cover.blob.type });
           const cr = await uploadPresigned(cu.uploadUrl, coverFile, () => {});
           if (!cr.success) console.warn('Cover upload failed:', cr.message);
         }

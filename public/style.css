@@ -4,8 +4,6 @@
    scanlines, bracketed labels. Shared by index + book pages.
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=VT323&display=swap');
-
 :root {
     --bg: #06060d;
     --bg2: #0a0a16;
@@ -180,16 +178,21 @@ img { max-width: 100%; display: block; }
 .btn-sm { padding: 6px 12px; min-height: 32px; font-size: 11px; }
 
 .btn-jump {
-    display: inline-flex; align-items: center; gap: 10px;
+    position: relative; display: inline-flex; align-items: center; gap: 10px;
     margin-top: 18px; padding: 12px 22px;
     border: 1px solid var(--acc2); color: #fff; text-decoration: none;
     font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
     background: var(--glow-soft);
     box-shadow: 0 0 18px var(--glow-soft), inset 0 0 18px var(--glow-soft);
-    animation: breathe 3s ease-in-out infinite;
 }
-.btn-jump:hover { box-shadow: 0 0 30px var(--glow), inset 0 0 20px var(--glow-soft); }
-@keyframes breathe { 50% { box-shadow: 0 0 30px var(--glow), inset 0 0 18px var(--glow-soft); } }
+/* The pulsing glow lives on a pseudo-element and animates opacity only (compositor-friendly) */
+.btn-jump::after {
+    content: ''; position: absolute; inset: -1px; pointer-events: none;
+    box-shadow: 0 0 30px var(--glow), inset 0 0 18px var(--glow-soft);
+    opacity: 0; animation: breathe 3s ease-in-out infinite;
+}
+.btn-jump:hover::after { opacity: 1; animation: none; }
+@keyframes breathe { 50% { opacity: 1; } }
 
 /* ---------- Browse toolbar ---------- */
 .toolbar {
@@ -215,6 +218,8 @@ img { max-width: 100%; display: block; }
     gap: 26px 20px;
     margin: 8px 0 24px;
 }
+/* Reserve room while the list loads so the footer does not jump down when covers arrive */
+.shelf:empty { min-height: 80vh; }
 .tile {
     display: block; min-width: 0; text-decoration: none; color: inherit;
     transition: transform 0.2s ease;

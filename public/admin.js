@@ -63,6 +63,51 @@ async function initAdmin() {
   document.getElementById('adminCleanupBtn').onclick = adminCleanup;
   document.getElementById('adminEnrichBtn').onclick = adminEnrichAll;
   document.getElementById('adminCorsBtn').onclick = adminSetCors;
+  document.getElementById('adminCoversBtn').onclick = adminOptimizeCovers;
+}
+
+// Re-encodes every cover as a resized WebP (JPEG where the browser cannot encode WebP) and
+// replaces it in B2. Skips covers that are already small. Runs in this browser.
+async function adminOptimizeCovers() {
+  if (!adminKey) return;
+  const btn = document.getElementById('adminCoversBtn');
+  const out = document.getElementById('adminCleanupResult');
+  const todo = files.filter(f => f.coverB2Name);
+  if (!confirm(`Optimizar las portadas de ${todo.length} libros? Tarda unos segundos por libro.`)) return;
+  btn.disabled = true;
+  let done = 0, replaced = 0, savedBytes = 0, failed = 0;
+  for (const f of todo) {
+    done++;
+    out.textContent = `Portada ${done}/${todo.length}: ${CB.bookTitle(f)}`;
+    try {
+      const res = await fetch(CB.coverUrl(f), { cache: 'no-store' });
+      if (!res.ok) throw new Error('cover ' + res.status);
+      const original = await res.blob();
+      const { blob, ext } = await CB.encodeCover(original);
+      const alreadyGood = /\.webp$/i.test(f.coverB2Name) && original.size <= 90 * 1024;
+      if (alreadyGood || blob.size >= original.size * 0.9) continue;
+      const cu = await fetch('/api/cover-upload', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ id: f.id, originalFilename: 'cover.' + ext }),
+      });
+      const data = await cu.json().catch(() => ({}));
+      if (!cu.ok || !data.ok) throw new Error(data.message || `cover-upload ${cu.status}`);
+      const put = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', data.uploadUrl); xhr.timeout = 120000;
+        xhr.setRequestHeader('Content-Type', blob.type);
+        xhr.onload = () => resolve(xhr.status); xhr.onerror = () => reject(new Error('red')); xhr.ontimeout = () => reject(new Error('timeout'));
+        xhr.send(blob);
+      });
+      if (put < 200 || put >= 300) throw new Error('PUT ' + put);
+      replaced++; savedBytes += Math.max(0, original.size - blob.size);
+    } catch (e) {
+      failed++; console.warn('cover optimize failed', f.id, e);
+    }
+  }
+  out.textContent = `Listo: ${replaced} portadas reemplazadas, ${(savedBytes / 1048576).toFixed(1)} MB ahorrados, ${failed} fallos.`;
+  btn.disabled = false;
+  await loadAdminFiles();
 }
 
 // Applies the bucket CORS rule that presigned S3 uploads need. Reports what B2 says.
@@ -151,7 +196,7 @@ function renderAdminList() {
     const m = f.meta || {};
     const has = !!(m.title || m.author);
     return `<div class="arow" id="arow-${f.id}">
-      <img src="${f.coverB2Name ? `/api/cover/${f.id}` : ''}" alt="" onerror="this.style.visibility='hidden'" />
+      <img src="${CB.coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'" />
       <div>
         <div class="t">${CB.escapeHtml(CB.bookTitle(f))}</div>
         <div class="s">${CB.escapeHtml(CB.bookAuthor(f) || 'sin autor')} · ${CB.formatSize(f.size)} · ${CB.formatDate(f.uploadedAt)} · ${has ? '<span class="ok">datos ✓</span>' : '<span class="no">sin datos</span>'}${m.pages ? ` · ${m.pages} págs` : ''}</div>

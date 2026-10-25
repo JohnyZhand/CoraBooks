@@ -1,8 +1,8 @@
 // Returns a B2 upload URL for a cover image and records the cover name in KV.
 // Only allowed while the book is still pending (between /api/upload and /api/commit-upload),
 // so nobody can replace the cover of a published book. Image extensions only.
-import { COVER_EXTENSIONS, coverContentType, extensionOf } from '../../lib/files.js';
-import { b2PresignPut } from '../../lib/b2.js';
+import { COVER_EXTENSIONS, coverContentType, extensionOf, isAdmin } from '../../lib/files.js';
+import { b2PresignPut, b2DeleteByName } from '../../lib/b2.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -18,10 +18,16 @@ export async function onRequest(context) {
     const files = await env.CORABOOKS_KV.get('files', 'json') || [];
     const idx = files.findIndex(f => f.id === id);
     if (idx === -1) return json({ ok: false, message: 'File not found' }, 404);
-    if (files[idx].ready === true) return json({ ok: false, message: 'Cover can only be set while the upload is pending' }, 403);
+    const admin = isAdmin(request, env);
+    if (files[idx].ready === true && !admin) return json({ ok: false, message: 'Cover can only be set while the upload is pending' }, 403);
 
-    // Build a cover filename tied to the file id
-    const coverName = `${id}.cover.${ext}`;
+    // Cover filename tied to the file id. Admin replacements get a version stamp so the URL
+    // (and therefore browser and edge caches) changes, and the previous file is removed.
+    const previous = files[idx].coverB2Name;
+    const coverName = admin && previous ? `${id}.cover.${Date.now().toString(36)}.${ext}` : `${id}.cover.${ext}`;
+    if (admin && previous && previous !== coverName) {
+      try { await b2DeleteByName(env, previous); } catch (e) { /* best effort */ }
+    }
 
     // Presigned S3 PUT for exactly this cover name (1 hour)
     const uploadUrl = await b2PresignPut(env, coverName, 3600);

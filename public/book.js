@@ -44,7 +44,7 @@
       if (meta.coverUrl && img.src !== meta.coverUrl) { img.src = meta.coverUrl; return; }
       cover.classList.add('nocover');
     };
-    img.src = f.coverB2Name ? `/api/cover/${f.id}` : (meta.coverUrl || '');
+    img.src = CB.coverUrl(f) || meta.coverUrl || '';
     if (!f.coverB2Name && !meta.coverUrl) cover.classList.add('nocover');
 
     $('stripFmt').textContent = `FILE // ${fmt}`;

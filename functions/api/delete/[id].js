@@ -25,8 +25,6 @@ export async function onRequest(context) {
     filesData.splice(fileIndex, 1);
     await env.CORABOOKS_KV.put('files', JSON.stringify(filesData));
 
-    // Drop the cached cover so a reused id could never show a stale image
-    try { await caches.default.delete(new Request(`https://cache.internal/cover/${params.id}`, { method: 'GET' })); } catch (e) { /* ignore */ }
 
     return json({ message: 'File deleted successfully', deleted });
   } catch (error) {

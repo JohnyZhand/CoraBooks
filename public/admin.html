@@ -6,6 +6,9 @@
   <title>CoraBooks - Admin</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=VT323&display=swap" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -14,7 +17,7 @@
     <header class="topbar">
       <div class="wrap topbar-in">
         <a class="brand" href="/">
-          <img src="/bookcat.png" class="brand-cat" alt="" />
+          <img src="/bookcat-sm.png" class="brand-cat" alt="" width="42" height="42" />
           <span class="brand-name">CORABOOKS<span class="cursor">_</span></span>
           <span class="brand-tag">Admin</span>
         </a>
@@ -59,6 +62,7 @@
               <button id="adminCleanupBtn" class="btn" type="button">Cleanup pending</button>
               <button id="adminEnrichBtn" class="btn" type="button">Completar datos de todos</button>
               <button id="adminCorsBtn" class="btn" type="button">Configurar CORS de B2</button>
+              <button id="adminCoversBtn" class="btn" type="button">Optimizar portadas</button>
             </div>
             <div id="adminCleanupResult" class="progress-line"></div>
           </div>
