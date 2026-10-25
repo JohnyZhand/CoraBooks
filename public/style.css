@@ -442,12 +442,12 @@ img { max-width: 100%; display: block; }
 
     /* Top bar: brand row, then a full-width 4-column nav without brackets */
     .topbar-in { flex-wrap: wrap; gap: 0; padding: 8px 0 0; min-height: 0; }
-    .brand { column-gap: 10px; padding-bottom: 6px; }
+    .brand { column-gap: 10px; padding: 0 0 6px 8px; }
     .brand-tag { display: none; }
     .brand-name { font-size: 26px; }
     .brand-cat { width: 32px; height: 32px; grid-row: 1; }
     /* compact status light on the brand row, top right */
-    .sysline { display: flex; margin-left: auto; align-self: center; padding-bottom: 6px; font-size: 9px; letter-spacing: 0.1em; gap: 6px; }
+    .sysline { display: flex; margin-left: auto; align-self: center; padding: 0 12px 6px 0; font-size: 9px; letter-spacing: 0.1em; gap: 6px; }
     .sysline .dot { width: 6px; height: 6px; }
     .sys-long { display: none; }
     .sys-short { display: inline; }
