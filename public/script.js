@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Deep links like /#upload or /#about open that section once, then the hash is removed
   // from the address bar so a refresh always comes back to the library.
   const hash = (location.hash || '').replace('#', '');
-  if (['upload', 'about'].includes(hash)) {
+  if (['upload', 'recursos', 'about'].includes(hash)) {
     showSection(hash);
     history.replaceState(null, '', location.pathname + location.search);
   }

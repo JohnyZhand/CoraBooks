@@ -41,6 +41,7 @@
         <nav class="nav">
           <button class="nav-btn active" data-section="browse" onclick="showSection('browse')">Biblioteca</button>
           <button class="nav-btn" data-section="upload" onclick="showSection('upload')">Subir</button>
+          <button class="nav-btn" data-section="recursos" onclick="showSection('recursos')">Recursos</button>
           <button class="nav-btn" data-section="about" onclick="showSection('about')">About</button>
         </nav>
       </div>
@@ -55,8 +56,6 @@
             <span class="label">Biblioteca</span>
             <h2 class="h-display">Browse Books</h2>
             <p class="lede">Pa los que se niegan a pagar</p>
-            <a class="btn-jump" href="#student-tools-section">Herramientas Estudiantiles <span>&#8595;</span></a>
-            <p class="hint">Las herramientas se encuentran al final de la página. Para llegar a ellas más rápido usa el botón.</p>
           </div>
 
           <div class="toolbar">
@@ -67,68 +66,6 @@
 
           <div id="files-list" class="shelf"></div>
           <div class="loading" id="loading"><div class="loading-spinner"></div><span>CARGANDO LIBROS…</span></div>
-
-          <!-- ================= TOOLS ================= -->
-          <div id="student-tools-section" class="sec-head tools-head">
-            <span class="label">Herramientas</span>
-            <h2 class="h-display">Herramientas Para Estudiantes</h2>
-            <p class="lede">Student Tools</p>
-          </div>
-
-          <div class="tool-groups">
-            <div class="panel">
-              <h3 class="panel-title">✅ Lo Importante</h3>
-              <div class="toollist">
-                <a class="tool" href="https://www.uprag.edu/calendario-academico-3/" target="_blank" rel="noopener noreferrer">Calendario Académico UPRAG</a>
-                <a class="tool" href="https://studentaid.gov/h/apply-for-aid/fafsa" target="_blank" rel="noopener noreferrer">FAFSA (Beca)</a>
-                <a class="tool" href="https://notaso.com/" target="_blank" rel="noopener noreferrer">Busca Si Tu Profe Es Bueno</a>
-                <a class="tool" href="https://ibb.co/cKVJDY4y" target="_blank" rel="noopener noreferrer">Grupo WhatsApp Libros UPRAG</a>
-              </div>
-            </div>
-            <div class="panel">
-              <h3 class="panel-title">💸 Más Becas (Scholarships)</h3>
-              <div class="toollist">
-                <a class="tool" href="https://bold.org/" target="_blank" rel="noopener noreferrer">Bold.org</a>
-                <a class="tool" href="https://scholarships360.org/" target="_blank" rel="noopener noreferrer">Scholarships360</a>
-                <a class="tool" href="https://scholarshiproar.com/" target="_blank" rel="noopener noreferrer">Scholarship Roar</a>
-              </div>
-            </div>
-            <div class="panel">
-              <h3 class="panel-title">🤑 Beneficios de Estudiantes (Student Deals)</h3>
-              <div class="toollist">
-                <a class="tool" href="https://freeforstudents.org/row" target="_blank" rel="noopener noreferrer">Free For Students</a>
-                <a class="tool" href="https://www.myunidays.com/GB/en-GB" target="_blank" rel="noopener noreferrer">Deals For Students</a>
-              </div>
-            </div>
-            <div class="panel">
-              <h3 class="panel-title">📚 Pa que no te cuelgues (Study Smarter)</h3>
-              <div class="toollist">
-                <a class="tool" href="https://open.spotify.com/album/52FJKyr5sAqiA6nZah9dLz?si=EG94Ec9ZQ-KMtNjUZUP_cQ" target="_blank" rel="noopener noreferrer">My Study Playlist</a>
-                <a class="tool" href="https://notebooklm.google/" target="_blank" rel="noopener noreferrer">Best Study Tool Ever (NotebookLM)</a>
-                <a class="tool" href="https://quillbot.com/" target="_blank" rel="noopener noreferrer">Quillbot (Plagiarism / AI Check)</a>
-                <a class="tool" href="https://apps.ankiweb.net/" target="_blank" rel="noopener noreferrer">Anki (Best Flash Cards)</a>
-                <a class="tool" href="https://obsidian.md/" target="_blank" rel="noopener noreferrer">Obsidian (Note Taking)</a>
-              </div>
-            </div>
-            <div class="panel">
-              <h3 class="panel-title">🧬 Biología / Biomedicina</h3>
-              <div class="toollist">
-                <a class="tool" href="https://www.innerbody.com/htm/body.html" target="_blank" rel="noopener noreferrer">Anatomía</a>
-                <a class="tool" href="https://3d.nih.gov/discover" target="_blank" rel="noopener noreferrer">Modelos 3D Medicina</a>
-                <a class="tool" href="https://www.cram.com/medical" target="_blank" rel="noopener noreferrer">Flash Cards Medicina</a>
-              </div>
-            </div>
-            <div class="panel">
-              <h3 class="panel-title">🧪 Química (Chemistry)</h3>
-              <div class="toollist">
-                <a class="tool" href="https://chemistrytalk.org/" target="_blank" rel="noopener noreferrer">Chemistrytalk.org</a>
-                <a class="tool" href="https://www.organic-chemistry.org/" target="_blank" rel="noopener noreferrer">Organic Chemistry Portal</a>
-                <a class="tool" href="https://www.chemtube3d.com/" target="_blank" rel="noopener noreferrer">Modelos 3D Química Orgánica Interactivos</a>
-                <a class="tool" href="https://www.chemspider.com/" target="_blank" rel="noopener noreferrer">Estructuras Químicas</a>
-                <a class="tool" href="https://phet.colorado.edu/en/simulations/filter?subjects=chemistry&type=html" target="_blank" rel="noopener noreferrer">Simulaciones Químicas</a>
-              </div>
-            </div>
-          </div>
 
           <p class="center" style="margin-top:36px"><a class="btn-jump" href="#browse-section">Volver Arriba <span>&#8593;</span></a></p>
         </section>
@@ -199,6 +136,73 @@
               </div>
             </form>
           </div>
+        </section>
+
+        <!-- ================= RECURSOS ================= -->
+        <section id="recursos-section" class="section">
+          <div class="sec-head">
+            <span class="label">Recursos</span>
+            <h2 class="h-display">Herramientas Para Estudiantes</h2>
+            <p class="lede">Student Tools</p>
+          </div>
+
+          <div class="tool-groups">
+            <div class="panel">
+              <h3 class="panel-title">✅ Lo Importante</h3>
+              <div class="toollist">
+                <a class="tool" href="https://www.uprag.edu/calendario-academico-3/" target="_blank" rel="noopener noreferrer">Calendario Académico UPRAG</a>
+                <a class="tool" href="https://studentaid.gov/h/apply-for-aid/fafsa" target="_blank" rel="noopener noreferrer">FAFSA (Beca)</a>
+                <a class="tool" href="https://notaso.com/" target="_blank" rel="noopener noreferrer">Busca Si Tu Profe Es Bueno</a>
+                <a class="tool" href="https://ibb.co/cKVJDY4y" target="_blank" rel="noopener noreferrer">Grupo WhatsApp Libros UPRAG</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">💸 Más Becas (Scholarships)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://bold.org/" target="_blank" rel="noopener noreferrer">Bold.org</a>
+                <a class="tool" href="https://scholarships360.org/" target="_blank" rel="noopener noreferrer">Scholarships360</a>
+                <a class="tool" href="https://scholarshiproar.com/" target="_blank" rel="noopener noreferrer">Scholarship Roar</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">🤑 Beneficios de Estudiantes (Student Deals)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://freeforstudents.org/row" target="_blank" rel="noopener noreferrer">Free For Students</a>
+                <a class="tool" href="https://www.myunidays.com/GB/en-GB" target="_blank" rel="noopener noreferrer">Deals For Students</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">📚 Pa que no te cuelgues (Study Smarter)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://open.spotify.com/album/52FJKyr5sAqiA6nZah9dLz?si=EG94Ec9ZQ-KMtNjUZUP_cQ" target="_blank" rel="noopener noreferrer">My Study Playlist</a>
+                <a class="tool" href="https://notebooklm.google/" target="_blank" rel="noopener noreferrer">Best Study Tool Ever (NotebookLM)</a>
+                <a class="tool" href="https://quillbot.com/" target="_blank" rel="noopener noreferrer">Quillbot (Plagiarism / AI Check)</a>
+                <a class="tool" href="https://apps.ankiweb.net/" target="_blank" rel="noopener noreferrer">Anki (Best Flash Cards)</a>
+                <a class="tool" href="https://obsidian.md/" target="_blank" rel="noopener noreferrer">Obsidian (Note Taking)</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">🧬 Biología / Biomedicina</h3>
+              <div class="toollist">
+                <a class="tool" href="https://www.innerbody.com/htm/body.html" target="_blank" rel="noopener noreferrer">Anatomía</a>
+                <a class="tool" href="https://3d.nih.gov/discover" target="_blank" rel="noopener noreferrer">Modelos 3D Medicina</a>
+                <a class="tool" href="https://www.cram.com/medical" target="_blank" rel="noopener noreferrer">Flash Cards Medicina</a>
+              </div>
+            </div>
+            <div class="panel">
+              <h3 class="panel-title">🧪 Química (Chemistry)</h3>
+              <div class="toollist">
+                <a class="tool" href="https://chemistrytalk.org/" target="_blank" rel="noopener noreferrer">Chemistrytalk.org</a>
+                <a class="tool" href="https://www.organic-chemistry.org/" target="_blank" rel="noopener noreferrer">Organic Chemistry Portal</a>
+                <a class="tool" href="https://www.chemtube3d.com/" target="_blank" rel="noopener noreferrer">Modelos 3D Química Orgánica Interactivos</a>
+                <a class="tool" href="https://www.chemspider.com/" target="_blank" rel="noopener noreferrer">Estructuras Químicas</a>
+                <a class="tool" href="https://phet.colorado.edu/en/simulations/filter?subjects=chemistry&type=html" target="_blank" rel="noopener noreferrer">Simulaciones Químicas</a>
+              </div>
+            </div>
+          </div>
+
+
+          <p class="center" style="margin-top:36px"><a class="btn-jump" href="#recursos-section">Volver Arriba <span>&#8593;</span></a></p>
         </section>
 
         <!-- ================= ABOUT ================= -->
