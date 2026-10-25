@@ -22,21 +22,22 @@
   <meta name="twitter:description" content="De un Maceta a Otro" />
   <meta name="twitter:image" content="https://corabooks.pages.dev/og-image.png" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=VT323&display=swap" />
+  <link rel="preload" href="/fonts/JetBrainsMono-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/VT323-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts/fonts.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="/favicon.ico" type="image/x-icon" />
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 </head>
 <body>
+  <script>window.__filesPromise = fetch('/api/files').then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); });</script>
   <div class="scanlines" aria-hidden="true"></div>
   <div class="app">
     <!-- Top bar -->
     <header class="topbar">
       <div class="wrap topbar-in">
         <a class="brand" href="/">
-          <img src="bookcat-sm.png" class="brand-cat" alt="" width="42" height="42" />
+          <img src="bookcat-sm.webp" class="brand-cat" alt="" width="42" height="42" />
           <span class="brand-name">CORABOOKS<span class="cursor">_</span></span>
           <span class="brand-tag">De un Maceta A Otro</span>
         </a>
@@ -226,7 +227,7 @@
             <p class="lede">La necesidad es la madre de la inovacion...y aqui se necesita mucho💀</p>
           </div>
           <div class="panel about-card">
-            <img src="bookcat-md.png" alt="CoraBooks Cat" class="about-cat" width="440" height="293" loading="lazy" />
+            <img src="bookcat-md.webp" alt="CoraBooks Cat" class="about-cat" width="440" height="293" loading="lazy" />
             <p>🚨 Para la mejor experiencia, abre la página en computadora 🚨</p>
             <p>Esta página está hecha con el propósito de que estudiantes puedan compartir y acceder a libros de manera gratuita. A ver si la beca sobra pa algo</p>
             <p>La página todavía está en constante desarollo, y con el tiempo se continuarán añadiendo más libros y funcionalidades.</p>

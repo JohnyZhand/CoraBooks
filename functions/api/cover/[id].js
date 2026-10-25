@@ -12,9 +12,11 @@ export async function onRequest(context) {
 
   // ?v= is the cover's version (part of its stored name); a replaced cover gets a new URL,
   // so each version can be cached for a year.
-  const version = (new URL(request.url).searchParams.get('v') || '').replace(/[^\w.-]/g, '').slice(0, 40);
+  const url = new URL(request.url);
+  const version = (url.searchParams.get('v') || '').replace(/[^\w.-]/g, '').slice(0, 40);
+  const small = url.searchParams.get('s') === 'sm';
   const cache = caches.default;
-  const cacheKey = new Request(`https://cache.internal/cover/${fileId}/${version || 'v0'}`, { method: 'GET' });
+  const cacheKey = new Request(`https://cache.internal/cover/${fileId}/${version || 'v0'}${small ? '/sm' : ''}`, { method: 'GET' });
   try {
     const cached = await cache.match(cacheKey);
     if (cached) return cached;
@@ -27,10 +29,11 @@ export async function onRequest(context) {
     if (!env.B2_APPLICATION_KEY_ID || !env.B2_APPLICATION_KEY || !env.B2_BUCKET_NAME) return new Response('Server config', { status: 500 });
 
     // Type comes from the stored cover name; anything that is not an image is refused
-    const type = coverContentType(f.coverB2Name);
+    const name = small && f.coverSmallB2Name ? f.coverSmallB2Name : f.coverB2Name;
+    const type = coverContentType(name);
     if (!type) return new Response('Not Found', { status: 404, headers: cors });
 
-    const b2Resp = await b2DownloadByName(env, f.coverB2Name);
+    const b2Resp = await b2DownloadByName(env, name);
     if (!b2Resp.ok) return new Response('Not Found', { status: 404, headers: cors });
 
     const headers = new Headers(cors);

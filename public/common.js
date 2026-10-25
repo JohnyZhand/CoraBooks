@@ -372,11 +372,12 @@
   function stripTags(s) { return String(s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); }
 
   // ----- Cover images -----
-  const COVER_W = 480, COVER_H = 720; // 2:3, ~2x the largest tile the grid draws
+  const COVER_W = 480, COVER_H = 720; // 2:3; a 240x360 variant is made for small tiles
 
   // Resizes an image (Blob or canvas) to the cover size and encodes it as WebP when the
-  // browser can, otherwise JPEG. Returns { blob, ext }.
-  async function encodeCover(source) {
+  // browser can, otherwise JPEG. Returns { blob, ext }. opts: { width, height, quality }.
+  async function encodeCover(source, opts) {
+    const W = (opts && opts.width) || COVER_W, H = (opts && opts.height) || COVER_H, Q = (opts && opts.quality) || 0.8;
     let canvas;
     if (source instanceof HTMLCanvasElement) canvas = source;
     else {
@@ -386,7 +387,7 @@
       canvas.getContext('2d').drawImage(bmp, 0, 0);
       bmp.close && bmp.close();
     }
-    const scale = Math.min(1, COVER_W / canvas.width, COVER_H / canvas.height);
+    const scale = Math.min(1, W / canvas.width, H / canvas.height);
     if (scale < 1) {
       const c2 = document.createElement('canvas');
       c2.width = Math.round(canvas.width * scale); c2.height = Math.round(canvas.height * scale);
@@ -396,16 +397,19 @@
       canvas = c2;
     }
     const toBlob = (type, q) => new Promise(res => canvas.toBlob(res, type, q));
-    let blob = await toBlob('image/webp', 0.82);
+    let blob = await toBlob('image/webp', Q);
     if (blob && blob.type === 'image/webp') return { blob, ext: 'webp' };
-    blob = await toBlob('image/jpeg', 0.85);
+    blob = await toBlob('image/jpeg', Math.min(0.9, Q + 0.05));
     return { blob, ext: 'jpg' };
   }
 
   // Cover URL for a record; the version keeps browser and edge caches honest when a cover is replaced.
-  function coverUrl(file) {
+  // size 'sm' returns the 240x360 variant when the record has one (else '').
+  function coverUrl(file, size) {
     if (!file || !file.coverB2Name) return '';
-    return '/api/cover/' + encodeURIComponent(file.id) + '?v=' + encodeURIComponent(file.coverB2Name.replace(file.id + '.cover.', ''));
+    if (size === 'sm' && !file.coverSmallB2Name) return '';
+    const v = encodeURIComponent(file.coverB2Name.replace(file.id + '.cover.', ''));
+    return '/api/cover/' + encodeURIComponent(file.id) + '?v=' + v + (size === 'sm' ? '&s=sm' : '');
   }
 
   // Reads page count and the PDF's own Title/Author. Accepts a File or a URL; with a URL only

@@ -21,6 +21,7 @@ export async function onRequest(context) {
     let deleted = { file: 0, cover: 0 };
     try { deleted.file = await b2DeleteByName(env, fileToDelete.b2FileName); } catch (e) { console.warn('B2 file delete failed', e); }
     try { deleted.cover = await b2DeleteByName(env, fileToDelete.coverB2Name); } catch (e) { console.warn('B2 cover delete failed', e); }
+    try { if (fileToDelete.coverSmallB2Name) deleted.cover += await b2DeleteByName(env, fileToDelete.coverSmallB2Name); } catch (e) { /* best effort */ }
 
     filesData.splice(fileIndex, 1);
     await env.CORABOOKS_KV.put('files', JSON.stringify(filesData));

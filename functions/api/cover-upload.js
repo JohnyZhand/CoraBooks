@@ -23,20 +23,23 @@ export async function onRequest(context) {
 
     // Cover filename tied to the file id. Admin replacements get a version stamp so the URL
     // (and therefore browser and edge caches) changes, and the previous file is removed.
-    const previous = files[idx].coverB2Name;
+    const previous = files[idx].coverB2Name, previousSmall = files[idx].coverSmallB2Name;
     const coverName = admin && previous ? `${id}.cover.${Date.now().toString(36)}.${ext}` : `${id}.cover.${ext}`;
+    const coverSmallName = coverName.replace(/\.(\w+)$/, '.sm.$1');
     if (admin && previous && previous !== coverName) {
       try { await b2DeleteByName(env, previous); } catch (e) { /* best effort */ }
+      try { if (previousSmall) await b2DeleteByName(env, previousSmall); } catch (e) { /* best effort */ }
     }
 
-    // Presigned S3 PUT for exactly this cover name (1 hour)
+    // Presigned S3 PUTs for exactly these two names (1 hour): full cover and the small variant
     const uploadUrl = await b2PresignPut(env, coverName, 3600);
+    const uploadUrlSmall = await b2PresignPut(env, coverSmallName, 3600);
 
     // Save cover name on the record (does not mark ready)
-    files[idx] = { ...files[idx], coverB2Name: coverName, coverContentType: coverContentType(coverName) };
+    files[idx] = { ...files[idx], coverB2Name: coverName, coverSmallB2Name: coverSmallName, coverContentType: coverContentType(coverName) };
     await env.CORABOOKS_KV.put('files', JSON.stringify(files));
 
-    return json({ ok: true, uploadUrl, method: 'PUT', coverB2Name: coverName });
+    return json({ ok: true, uploadUrl, uploadUrlSmall, method: 'PUT', coverB2Name: coverName, coverSmallB2Name: coverSmallName });
   } catch (e) {
     return json({ ok: false, message: e.message }, 500);
   }

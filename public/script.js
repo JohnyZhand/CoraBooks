@@ -67,9 +67,14 @@ async function loadFiles() {
   const loading = document.getElementById('loading');
   if (loading) loading.style.display = 'flex';
   try {
-    const response = await fetch('/api/files');
-    if (!response.ok) throw new Error('bad status');
-    files = await response.json();
+    // The page head starts this request before the scripts load; use it once, then fetch normally
+    const early = window.__filesPromise; window.__filesPromise = null;
+    if (early) files = await early;
+    else {
+      const response = await fetch('/api/files');
+      if (!response.ok) throw new Error('bad status');
+      files = await response.json();
+    }
     files.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
     const count = document.getElementById('bookCount');
     if (count) count.textContent = String(files.length);
@@ -105,11 +110,13 @@ function renderShelf() {
   list.innerHTML = shown.map(file => {
     const title = CB.bookTitle(file), author = CB.bookAuthor(file), fmt = CB.bookFormat(file);
     const coverSrc = CB.coverUrl(file) || (file.meta && file.meta.coverUrl) || '';
+    const small = CB.coverUrl(file, 'sm');
+    const srcset = small ? ` srcset="${CB.escapeHtml(small)} 240w, ${CB.escapeHtml(coverSrc)} 480w" sizes="(max-width: 420px) 46vw, (max-width: 768px) 30vw, 190px"` : '';
     const i = shown.indexOf(file);
     return `
       <a class="tile" href="/book?id=${encodeURIComponent(file.id)}" title="${CB.escapeHtml(title)}">
         <div class="tile-cover${coverSrc ? '' : ' nocover'}">
-          <img src="${CB.escapeHtml(coverSrc)}" alt="" width="480" height="720" loading="${i < 8 ? 'eager' : 'lazy'}"${i < 2 ? ' fetchpriority="high"' : ''} onerror="this.parentElement.classList.add('nocover')" />
+          <img src="${CB.escapeHtml(coverSrc)}"${srcset} alt="" width="480" height="720" loading="${i < 8 ? 'eager' : 'lazy'}"${i < 2 ? ' fetchpriority="high"' : ''} onerror="this.parentElement.classList.add('nocover')" />
           <div class="fallback">${fmt}</div>
           <span class="tile-fmt">${fmt}</span>
         </div>
@@ -248,15 +255,19 @@ async function handleFileUpload(e) {
         if (raw) cover = await CB.encodeCover(raw); // resized + WebP when possible
       }
       if (cover && cover.blob) {
+        const small = await CB.encodeCover(cover.blob, { width: 240, height: 360, quality: 0.78 });
         const cuRes = await fetch('/api/cover-upload', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: fileId, originalFilename: 'cover.' + cover.ext }),
         });
         if (cuRes.ok) {
           const cu = await cuRes.json();
-          const coverFile = new File([cover.blob], 'cover.' + cover.ext, { type: cover.blob.type });
-          const cr = await uploadPresigned(cu.uploadUrl, coverFile, () => {});
+          const cr = await uploadPresigned(cu.uploadUrl, new File([cover.blob], 'cover.' + cover.ext, { type: cover.blob.type }), () => {});
           if (!cr.success) console.warn('Cover upload failed:', cr.message);
+          if (cu.uploadUrlSmall && small && small.blob) {
+            const cs = await uploadPresigned(cu.uploadUrlSmall, new File([small.blob], 'cover-sm.' + cover.ext, { type: small.blob.type }), () => {});
+            if (!cs.success) console.warn('Small cover upload failed:', cs.message);
+          }
         }
       }
     } catch (err) { console.warn('Cover generation skipped:', err); }

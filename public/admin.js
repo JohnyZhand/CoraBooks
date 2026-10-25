@@ -84,23 +84,30 @@ async function adminOptimizeCovers() {
       if (!res.ok) throw new Error('cover ' + res.status);
       const original = await res.blob();
       const { blob, ext } = await CB.encodeCover(original);
-      const alreadyGood = /\.webp$/i.test(f.coverB2Name) && original.size <= 90 * 1024;
-      if (alreadyGood || blob.size >= original.size * 0.9) continue;
+      const smallVariant = await CB.encodeCover(original, { width: 240, height: 360, quality: 0.78 });
+      const alreadyGood = /\.webp$/i.test(f.coverB2Name) && original.size <= 90 * 1024 && !!f.coverSmallB2Name;
+      if (alreadyGood) continue;
+      const useLarge = blob.size < original.size * 0.9 ? blob : original; // keep the current file if it is already smaller
       const cu = await fetch('/api/cover-upload', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ id: f.id, originalFilename: 'cover.' + ext }),
+        body: JSON.stringify({ id: f.id, originalFilename: 'cover.' + (useLarge === original ? (f.coverB2Name.split('.').pop() || ext) : ext) }),
       });
       const data = await cu.json().catch(() => ({}));
       if (!cu.ok || !data.ok) throw new Error(data.message || `cover-upload ${cu.status}`);
-      const put = await new Promise((resolve, reject) => {
+      const putTo = (url, b) => new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('PUT', data.uploadUrl); xhr.timeout = 120000;
-        xhr.setRequestHeader('Content-Type', blob.type);
+        xhr.open('PUT', url); xhr.timeout = 120000;
+        xhr.setRequestHeader('Content-Type', b.type);
         xhr.onload = () => resolve(xhr.status); xhr.onerror = () => reject(new Error('red')); xhr.ontimeout = () => reject(new Error('timeout'));
-        xhr.send(blob);
+        xhr.send(b);
       });
+      const put = await putTo(data.uploadUrl, useLarge);
       if (put < 200 || put >= 300) throw new Error('PUT ' + put);
-      replaced++; savedBytes += Math.max(0, original.size - blob.size);
+      if (data.uploadUrlSmall && smallVariant && smallVariant.blob) {
+        const ps = await putTo(data.uploadUrlSmall, smallVariant.blob);
+        if (ps < 200 || ps >= 300) throw new Error('PUT small ' + ps);
+      }
+      replaced++; savedBytes += Math.max(0, original.size - useLarge.size);
     } catch (e) {
       failed++; console.warn('cover optimize failed', f.id, e);
     }
