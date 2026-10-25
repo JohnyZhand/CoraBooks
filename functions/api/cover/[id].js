@@ -1,6 +1,8 @@
 // Streams the cover image from B2 if it exists
+import { b2DownloadByName } from '../../../lib/b2.js';
+
 export async function onRequest(context) {
-  const { env, params, caches } = context;
+  const { env, params } = context;
   const fileId = params.id;
   try {
     const files = await env.CORABOOKS_KV.get('files', 'json') || [];
@@ -13,14 +15,8 @@ export async function onRequest(context) {
     const b2BucketName = env.B2_BUCKET_NAME;
     if (!b2KeyId || !b2ApplicationKey || !b2BucketId || !b2BucketName) return new Response('Server config', { status: 500 });
 
-    const authResp = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', {
-      method: 'GET', headers: { 'Authorization': `Basic ${btoa(`${b2KeyId}:${b2ApplicationKey}`)}` }
-    });
-    if (!authResp.ok) return new Response('Auth failed', { status: 502 });
-    const auth = await authResp.json();
-
     // Try edge cache first
-    const cache = caches?.default;
+    const cache = caches.default;
     const cacheKeyUrl = new URL(`https://cache.internal/cover/${encodeURIComponent(fileId)}?v=${encodeURIComponent(f.coverB2Name)}`);
     const cacheKey = new Request(cacheKeyUrl.toString(), { method: 'GET' });
     if (cache) {
@@ -28,9 +24,7 @@ export async function onRequest(context) {
       if (cached) return cached;
     }
 
-    const b2Resp = await fetch(`${auth.downloadUrl}/file/${b2BucketName}/${encodeURIComponent(f.coverB2Name)}`, {
-      headers: { 'Authorization': auth.authorizationToken }
-    });
+    const b2Resp = await b2DownloadByName(env, f.coverB2Name);
     if (!b2Resp.ok) return new Response('Not Found', { status: 404 });
 
     const headers = new Headers();

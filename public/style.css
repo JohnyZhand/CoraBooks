@@ -1524,3 +1524,14 @@ body {
         margin-top: 2rem;
     }
 }
+/* Reader note above the book grid + big-book tag on cards */
+.reader-note { margin: 0 auto 2rem; max-width: 900px; }
+.reader-note .info-item { margin-bottom: .5rem; }
+.reader-note .info-item:last-child { margin-bottom: 0; }
+.big-file-note {
+    margin: -0.5rem 0 1rem;
+    font-size: 0.78rem;
+    color: var(--accent-purple);
+    opacity: 0.9;
+}
+.book-actions .btn { text-decoration: none; text-align: center; }

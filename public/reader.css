@@ -1,0 +1,92 @@
+:root {
+  --primary-purple: #8b5cf6;
+  --accent-purple: #c084fc;
+  --dark-bg: #0f0f23;
+  --darker-bg: #0a0a15;
+  --card-bg: #1a1a2e;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --toolbar-h: 52px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--darker-bg);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+}
+.hidden { display: none !important; }
+
+.rtoolbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+  height: var(--toolbar-h);
+  display: flex; align-items: center; gap: .5rem;
+  padding: 0 .75rem;
+  background: rgba(26, 26, 46, .96);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+}
+.rtitle {
+  flex: 1 1 auto; min-width: 0;
+  font-weight: 600; font-size: .95rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--accent-purple);
+}
+.rbtn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  min-width: 36px; height: 36px; padding: 0 .6rem;
+  border: 1px solid var(--border-color); border-radius: .5rem;
+  background: var(--card-bg); color: var(--text-primary);
+  font: inherit; font-size: .9rem; cursor: pointer; text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.rbtn:hover { background: #24243d; border-color: var(--primary-purple); }
+.rbtn:disabled { opacity: .4; cursor: default; }
+.rdownload { border-color: var(--primary-purple); }
+.rpager, .rzoom { display: flex; align-items: center; gap: .25rem; }
+.rpage {
+  width: 4.2rem; height: 36px; text-align: center;
+  border: 1px solid var(--border-color); border-radius: .5rem;
+  background: var(--darker-bg); color: var(--text-primary); font: inherit; font-size: .9rem;
+}
+.rpage:focus { outline: none; border-color: var(--primary-purple); }
+.rtotal { color: var(--text-secondary); font-size: .9rem; white-space: nowrap; }
+
+.rstatus {
+  position: fixed; top: calc(var(--toolbar-h) + 10px); left: 50%; transform: translateX(-50%);
+  z-index: 9; padding: .4rem .9rem; border-radius: 999px;
+  background: rgba(139, 92, 246, .9); color: #fff; font-size: .85rem; font-weight: 500;
+  pointer-events: none; transition: opacity .3s; white-space: nowrap;
+}
+.rstatus.fade { opacity: 0; }
+
+.rpages { padding: calc(var(--toolbar-h) + 16px) 8px 40px; }
+.rpagewrap {
+  position: relative; margin: 0 auto 14px;
+  background: #fff; box-shadow: 0 4px 24px rgba(0, 0, 0, .55);
+}
+.rpagewrap::after {
+  content: attr(data-num);
+  position: absolute; right: 8px; bottom: 6px;
+  font-size: .7rem; color: rgba(0, 0, 0, .35); pointer-events: none;
+}
+.rpagewrap canvas { display: block; width: 100%; height: 100%; }
+.rpagewrap.loading { background: #e9e9f1 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><circle cx='20' cy='20' r='14' fill='none' stroke='%238b5cf6' stroke-width='4' stroke-dasharray='60 30'><animateTransform attributeName='transform' type='rotate' from='0 20 20' to='360 20 20' dur='1s' repeatCount='indefinite'/></circle></svg>") center / 40px no-repeat; }
+
+.rerror {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+  padding: 2rem; text-align: center; background: var(--dark-bg);
+}
+.rerror h2 { color: var(--accent-purple); }
+.rerror p { color: var(--text-secondary); max-width: 32rem; }
+
+@media (max-width: 640px) {
+  .rlabel { display: none; }
+  .rtitle { font-size: .8rem; }
+  .rfit { display: none; }
+  .rtoolbar { gap: .35rem; padding: 0 .5rem; }
+  .rpages { padding-left: 0; padding-right: 0; }
+}
