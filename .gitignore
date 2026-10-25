@@ -9,8 +9,5 @@ npm-debug.log*
 *.tmp
 *.temp
 
-# Uploads - keep directory structure but ignore uploaded files
-uploads/files/*
-uploads/covers/*
-!uploads/files/.gitkeep
-!uploads/covers/.gitkeep
+# Wrangler local state
+.wrangler/
