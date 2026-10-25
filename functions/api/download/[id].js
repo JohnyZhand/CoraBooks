@@ -7,6 +7,7 @@
 // - B2 authorization is cached in KV (see lib/b2.js), so a request costs one B2 call.
 
 import { b2DownloadByName } from '../../../lib/b2.js';
+import { bookContentType } from '../../../lib/files.js';
 
 const MAX_CACHE_BYTES = 512 * 1024 * 1024;
 
@@ -61,7 +62,9 @@ export async function onRequest(context) {
     const headers = new Headers();
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Accept-Ranges', 'bytes');
-    headers.set('Content-Type', fileInfo.contentType || b2Resp.headers.get('Content-Type') || 'application/octet-stream');
+    // Type comes from the stored file name, never from what the uploader claimed
+    headers.set('Content-Type', bookContentType(fileInfo.b2FileName));
+    headers.set('X-Content-Type-Options', 'nosniff');
     headers.set('Content-Disposition', contentDisposition);
     for (const h of ['Content-Range', 'Content-Length', 'ETag', 'Last-Modified']) {
       const v = b2Resp.headers.get(h);

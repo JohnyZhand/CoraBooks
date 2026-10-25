@@ -1,4 +1,6 @@
 // Simple admin auth check; requires x-admin-key header matching env.ADMIN_API_KEY
+import { safeEqual } from '../../../lib/files.js';
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -20,7 +22,7 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({ ok: false, message: 'Server admin key not set' }), { status: 500, headers: jsonCors() });
   }
 
-  if (!headerKey || headerKey !== adminKey) {
+  if (!headerKey || !safeEqual(headerKey, adminKey)) {
     return new Response(JSON.stringify({ ok: false }), { status: 401, headers: jsonCors() });
   }
 

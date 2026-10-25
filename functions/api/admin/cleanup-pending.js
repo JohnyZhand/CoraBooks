@@ -2,6 +2,8 @@
 // - Removes KV entries where ready !== true and older than a threshold
 // - Verifies presence/size in B2; if missing or mismatched, deletes the B2 file (if exists) and removes KV entry
 // - Returns a summary of actions
+import { safeEqual } from '../../../lib/files.js';
+
 export async function onRequest(context) {
   const { env, request } = context;
 
@@ -16,7 +18,7 @@ export async function onRequest(context) {
   // Admin auth
   const provided = request.headers.get('x-admin-key');
   const expected = env.ADMIN_API_KEY;
-  if (!expected || !provided || provided !== expected) {
+  if (!expected || !provided || !safeEqual(provided, expected)) {
     return json({ ok: false, message: 'Unauthorized' }, 401);
   }
 

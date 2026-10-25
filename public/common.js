@@ -372,8 +372,10 @@
   function stripTags(s) { return String(s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); }
 
   // Reads page count and the PDF's own Title/Author. Accepts a File or a URL; with a URL only
-  // small byte ranges are fetched, so this is cheap even for a 900 MB book.
-  async function readPdfInfo(source) {
+  // small byte ranges are fetched, so this is cheap even for a 900 MB book. With
+  // { thumbnail: maxDimension } it also renders page 1 to a JPEG Blob from the same read,
+  // so a local file is only loaded into memory once.
+  async function readPdfInfo(source, options) {
     if (!global.pdfjsLib) return null;
     const opts = source instanceof Blob
       ? { data: await source.arrayBuffer() }
@@ -384,7 +386,20 @@
       let info = {};
       try { info = (await pdf.getMetadata()).info || {}; } catch (e) { /* optional */ }
       const title = cleanPdfString(info.Title), author = cleanPdfString(info.Author);
-      return { pages: pdf.numPages, title: /^(untitled|microsoft word|document\d*|\.indd|.*\.(doc|docx|indd|qxd|pdf))$/i.test(title) ? '' : title, author };
+      const out = { pages: pdf.numPages, title: /^(untitled|microsoft word|document\d*|\.indd|.*\.(doc|docx|indd|qxd|pdf))$/i.test(title) ? '' : title, author, thumbnail: null };
+      if (options && options.thumbnail) {
+        try {
+          const page = await pdf.getPage(1);
+          const base = page.getViewport({ scale: 1 });
+          const scale = Math.max(1, options.thumbnail / Math.max(base.width, base.height));
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.floor(viewport.width); canvas.height = Math.floor(viewport.height);
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+          out.thumbnail = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+        } catch (e) { console.warn('PDF thumbnail failed', e); }
+      }
+      return out;
     } finally {
       try { task.destroy(); } catch (e) { /* ignore */ }
     }

@@ -1,19 +1,25 @@
-// Returns a B2 upload URL for a cover image and records the cover name in KV
+// Returns a B2 upload URL for a cover image and records the cover name in KV.
+// Only allowed while the book is still pending (between /api/upload and /api/commit-upload),
+// so nobody can replace the cover of a published book. Image extensions only.
+import { COVER_EXTENSIONS, coverContentType, extensionOf } from '../../lib/files.js';
+
 export async function onRequest(context) {
   const { env, request } = context;
   if (request.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() });
   if (request.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: cors() });
   try {
-    const { id, originalFilename, contentType } = await request.json();
+    const { id, originalFilename } = await request.json();
     if (!id || !originalFilename) return json({ ok: false, message: 'Missing id or originalFilename' }, 400);
+    const ext = extensionOf(originalFilename);
+    if (!COVER_EXTENSIONS.includes(ext)) return json({ ok: false, message: 'Cover must be a JPG, PNG or WEBP image' }, 400);
 
     // Load file record
     const files = await env.CORABOOKS_KV.get('files', 'json') || [];
     const idx = files.findIndex(f => f.id === id);
     if (idx === -1) return json({ ok: false, message: 'File not found' }, 404);
+    if (files[idx].ready === true) return json({ ok: false, message: 'Cover can only be set while the upload is pending' }, 403);
 
     // Build a cover filename tied to the file id
-    const ext = (originalFilename.split('.').pop() || 'jpg').toLowerCase();
     const coverName = `${id}.cover.${ext}`;
 
     // Authorize and get upload URL
@@ -25,7 +31,7 @@ export async function onRequest(context) {
     const up = await upRes.json();
 
     // Save cover name on the record (does not mark ready)
-    files[idx] = { ...files[idx], coverB2Name: coverName, coverContentType: contentType || 'image/jpeg' };
+    files[idx] = { ...files[idx], coverB2Name: coverName, coverContentType: coverContentType(coverName) };
     await env.CORABOOKS_KV.put('files', JSON.stringify(files));
 
     return json({ ok: true, uploadUrl: up.uploadUrl, authorizationToken: up.authorizationToken, coverB2Name: coverName });

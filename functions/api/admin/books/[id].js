@@ -2,6 +2,8 @@
 // PUT /api/admin/books/:id  with header x-admin-key and JSON body { meta: {...}, filename?: string }
 import { sanitizeMeta } from '../../../../lib/meta.js';
 
+import { safeEqual } from '../../../../lib/files.js';
+
 export async function onRequest(context) {
   const { env, request, params } = context;
   if (request.method === 'OPTIONS') return new Response(null, { status: 200, headers: cors() });
@@ -12,7 +14,7 @@ export async function onRequest(context) {
   const provided = request.headers.get('x-admin-key');
   const expected = env.ADMIN_API_KEY;
   if (!expected) return json({ ok: false, message: 'Server admin key not set' }, 500);
-  if (!provided || provided !== expected) return json({ ok: false, message: 'Unauthorized' }, 401);
+  if (!provided || !safeEqual(provided, expected)) return json({ ok: false, message: 'Unauthorized' }, 401);
 
   try {
     const body = await request.json().catch(() => ({}));

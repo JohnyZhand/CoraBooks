@@ -3,6 +3,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeMeta } from '../../lib/meta.js';
+import { BOOK_EXTENSIONS, bookContentType, capString } from '../../lib/files.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -23,14 +24,23 @@ export async function onRequest(context) {
   }
 
   try {
-  const { filename, originalFilename, description, contentType, size, meta } = await request.json();
+  const body = await request.json();
+  // Everything below comes from the browser: cap it, and never trust its content type
+  const filename = capString(body.filename, 200);
+  const originalFilename = capString(body.originalFilename, 255);
+  const description = body.description;
+  const meta = body.meta;
+  const size = Number(body.size);
+  if (!Number.isFinite(size) || size <= 0) {
+    return new Response(JSON.stringify({ message: 'Invalid file size' }), { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+  }
   // Optional curated metadata gathered in the browser (PDF info + Google Books lookup)
   const cleanMeta = sanitizeMeta(meta);
   // Optional free-text description shown on the book card (trimmed, capped)
   const cleanDescription = typeof description === 'string' ? description.trim().slice(0, 1000) : '';
     
     // Enforce allowed file types: PDF, EPUB, MOBI
-    const allowedExt = ['pdf', 'epub', 'mobi'];
+    const allowedExt = BOOK_EXTENSIONS;
     const sourceName = (originalFilename || filename || '').toString();
     const dotIdx0 = sourceName.lastIndexOf('.');
     const reqExt = dotIdx0 > -1 ? sourceName.substring(dotIdx0 + 1).toLowerCase() : '';
@@ -120,7 +130,7 @@ export async function onRequest(context) {
       originalName: originalFilename || filename,
       description: cleanDescription,
       ...(cleanMeta ? { meta: cleanMeta } : {}),
-      contentType: contentType || 'application/octet-stream',
+      contentType: bookContentType(uniqueFilename),
       size: size,
       uploadedAt: new Date().toISOString(),
       b2FileName: uniqueFilename,

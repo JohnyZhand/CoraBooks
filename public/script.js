@@ -1,7 +1,29 @@
 // CoraBooks home page: shelf, search, upload with metadata. (Admin lives in admin.js)
 /* global CB, JSZip, pdfjsLib */
 let files = [];
-let pendingMeta = null; // metadata gathered for the file being uploaded
+let pendingMeta = null;   // metadata gathered for the file being uploaded
+let pendingCover = null;  // first-page JPEG rendered when the file was chosen (PDFs)
+
+// PDF.js and JSZip (~420 KB) are only needed on the upload screen, so they load on demand.
+const LIB_PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+const LIB_PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+const LIB_JSZIP = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+const libPromises = {};
+function loadScript(src) {
+  if (!libPromises[src]) {
+    libPromises[src] = new Promise((resolve, reject) => {
+      const el = document.createElement('script');
+      el.src = src; el.async = true;
+      el.onload = resolve; el.onerror = () => { delete libPromises[src]; reject(new Error('No se pudo cargar ' + src)); };
+      document.head.appendChild(el);
+    });
+  }
+  return libPromises[src];
+}
+async function ensureUploadLibs() {
+  await Promise.all([loadScript(LIB_PDFJS), loadScript(LIB_JSZIP)]);
+  if (window.pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) pdfjsLib.GlobalWorkerOptions.workerSrc = LIB_PDFJS_WORKER;
+}
 
 document.addEventListener('DOMContentLoaded', function () {
   loadFiles();
@@ -17,7 +39,7 @@ function setupEventListeners() {
   const fileInput = document.getElementById('file');
   if (fileInput) fileInput.addEventListener('change', onFileChosen);
   const resetBtn = document.getElementById('resetBtn');
-  if (resetBtn) resetBtn.addEventListener('click', () => { pendingMeta = null; hideMetaPreview(); });
+  if (resetBtn) resetBtn.addEventListener('click', () => { pendingMeta = null; pendingCover = null; hideMetaPreview(); });
   const search = document.getElementById('searchInput');
   if (search) search.addEventListener('input', () => renderShelf());
 }
@@ -29,6 +51,7 @@ function showSection(sectionName) {
   const target = document.getElementById(sectionName + '-section');
   if (target) target.classList.add('active');
   if (sectionName === 'browse') loadFiles();
+  if (sectionName === 'upload') ensureUploadLibs().catch(() => {});
   // ASCII cat: hidden on the upload screen, visible everywhere else (as before)
   const asciiCat = document.getElementById('asciiCat');
   if (asciiCat) asciiCat.style.display = sectionName === 'upload' ? 'none' : '';
@@ -100,7 +123,7 @@ function displayError(message) {
 async function onFileChosen(e) {
   const file = e.target.files[0];
   if (!file) return;
-  pendingMeta = null;
+  pendingMeta = null; pendingCover = null;
   const parsed = CB.parseFilename(file.name);
   setIfEmpty('fileName', parsed.title);
   setIfEmpty('author', parsed.author);
@@ -110,7 +133,11 @@ async function onFileChosen(e) {
   showMetaPreview('Leyendo el archivo…');
   let pdfInfo = null;
   if (/\.pdf$/i.test(file.name)) {
-    try { pdfInfo = await CB.readPdfInfo(file); } catch (err) { console.warn('pdf info failed', err); }
+    try {
+      await ensureUploadLibs();
+      pdfInfo = await CB.readPdfInfo(file, { thumbnail: 600 }); // one read: metadata, page count and cover
+      if (pdfInfo && pdfInfo.thumbnail) pendingCover = pdfInfo.thumbnail;
+    } catch (err) { console.warn('pdf info failed', err); }
     if (pdfInfo) {
       if (pdfInfo.title && isSparse(parsed.title)) setValue('fileName', pdfInfo.title);
       if (pdfInfo.author) setIfEmpty('author', pdfInfo.author);
@@ -205,11 +232,14 @@ async function handleFileUpload(e) {
     progressFill.style.width = '100%'; progressPercentage.textContent = '100%';
     progressLabel.textContent = '¡Subida completa!';
 
-    // Cover: first PDF page, or the EPUB's cover image
+    // Cover: the first PDF page rendered when the file was chosen, or the EPUB's cover image
     try {
-      let coverBlob = null;
-      if (/\.pdf$/i.test(file.name) && window.pdfjsLib) { progressLabel.textContent = 'Generando portada…'; coverBlob = await generatePdfThumbnail(file, 600); }
-      else if (/\.epub$/i.test(file.name) && window.JSZip) { progressLabel.textContent = 'Extrayendo portada del EPUB…'; coverBlob = await extractEpubCover(file); }
+      let coverBlob = pendingCover;
+      if (!coverBlob) {
+        await ensureUploadLibs();
+        if (/\.pdf$/i.test(file.name) && window.pdfjsLib) { progressLabel.textContent = 'Generando portada…'; coverBlob = await generatePdfThumbnail(file, 600); }
+        else if (/\.epub$/i.test(file.name) && window.JSZip) { progressLabel.textContent = 'Extrayendo portada del EPUB…'; coverBlob = await extractEpubCover(file); }
+      }
       if (coverBlob) {
         const cuRes = await fetch('/api/cover-upload', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -223,14 +253,22 @@ async function handleFileUpload(e) {
       }
     } catch (err) { console.warn('Cover generation skipped:', err); }
 
-    try {
-      await fetch('/api/commit-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: fileId }) });
-    } catch (err) { console.warn('Commit failed:', err); }
+    // Commit: the server checks the file really landed in B2 with the right size. If it did not,
+    // the record is discarded server-side and the upload must be reported as failed.
+    progressLabel.textContent = 'Verificando el archivo…';
+    const commitRes = await fetch('/api/commit-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: fileId }) });
+    const commit = await commitRes.json().catch(() => ({}));
+    if (!commitRes.ok || commit.ok === false) {
+      const why = commit.reason === 'size_mismatch' ? 'El archivo llegó incompleto al servidor.'
+        : commit.reason === 'not_found' ? 'El archivo no llegó al servidor.'
+        : (commit.message || 'No se pudo confirmar la subida.');
+      throw new Error(why + ' Inténtalo de nuevo, preferiblemente con una conexión estable.');
+    }
 
     showNotification('success', '¡Libro subido!', `${fileName || file.name} ya está en la biblioteca`);
     setTimeout(() => progressContainer.classList.add('hidden'), 2000);
     e.target.reset();
-    pendingMeta = null; hideMetaPreview();
+    pendingMeta = null; pendingCover = null; hideMetaPreview();
     await loadFiles();
     showSection('browse');
   } catch (error) {

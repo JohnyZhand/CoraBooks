@@ -252,15 +252,7 @@
     </footer>
   </div>
 
-  <!-- PDF.js: cover thumbnails + reading page counts / metadata at upload -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-  <script>
-    if (window.pdfjsLib) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-    }
-  </script>
-  <!-- JSZip for EPUB cover extraction -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <!-- PDF.js and JSZip are loaded on demand by script.js when the upload screen opens -->
   <script src="common.js"></script>
   <script src="script.js"></script>
 </body>
