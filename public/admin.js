@@ -64,6 +64,82 @@ async function initAdmin() {
   document.getElementById('adminEnrichBtn').onclick = adminEnrichAll;
   document.getElementById('adminCorsBtn').onclick = adminSetCors;
   document.getElementById('adminCoversBtn').onclick = adminOptimizeCovers;
+  document.getElementById('adminMissingCoversBtn').onclick = adminGenerateMissingCovers;
+}
+
+// PUT a blob to a presigned URL; resolves with the HTTP status
+function putBlob(url, b) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url); xhr.timeout = 120000;
+    xhr.setRequestHeader('Content-Type', b.type);
+    xhr.onload = () => resolve(xhr.status); xhr.onerror = () => reject(new Error('red')); xhr.ontimeout = () => reject(new Error('timeout'));
+    xhr.send(b);
+  });
+}
+
+// Downloads a book into memory, reporting bytes received
+async function fetchBookBlob(f, onProgress) {
+  const res = await fetch(`/api/download/${encodeURIComponent(f.id)}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('download ' + res.status);
+  if (!res.body) return res.blob();
+  const reader = res.body.getReader();
+  const chunks = []; let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value); got += value.length;
+    onProgress(got);
+  }
+  return new Blob(chunks, { type: res.headers.get('Content-Type') || 'application/octet-stream' });
+}
+
+// Books that ended up without a cover: download each one here, build the cover the same way
+// the upload screen does (PDF page 1, or the EPUB's declared cover image) and store it.
+async function adminGenerateMissingCovers() {
+  if (!adminKey) return;
+  const btn = document.getElementById('adminMissingCoversBtn');
+  const out = document.getElementById('adminCleanupResult');
+  const todo = files.filter(f => !f.coverB2Name && /\.(pdf|epub)$/i.test(f.originalName || f.filename || ''));
+  if (!todo.length) { out.textContent = 'Todos los libros PDF/EPUB ya tienen portada.'; return; }
+  const totalMb = todo.reduce((n, f) => n + (f.size || 0), 0) / 1048576;
+  if (!confirm(`Generar portadas para ${todo.length} libros? Hay que descargar ${totalMb.toFixed(0)} MB a este navegador.`)) return;
+  btn.disabled = true;
+  let done = 0, made = 0, failed = 0;
+  for (const f of todo) {
+    done++;
+    const label = `Portada ${done}/${todo.length}: ${CB.bookTitle(f)}`;
+    try {
+      out.textContent = `${label} — descargando…`;
+      const book = await fetchBookBlob(f, got => { out.textContent = `${label} — descargando ${(got / 1048576).toFixed(0)} / ${((f.size || 0) / 1048576).toFixed(0)} MB`; });
+      out.textContent = `${label} — extrayendo portada…`;
+      let cover = null;
+      if (/\.pdf$/i.test(f.originalName || f.filename)) { const info = await CB.readPdfInfo(book, { thumbnail: 720 }); cover = info && info.thumbnail; }
+      else { const raw = await CB.extractEpubCover(book); if (raw) cover = await CB.encodeCover(raw); }
+      if (!cover || !cover.blob) throw new Error('no se encontró portada en el archivo');
+      const small = await CB.encodeCover(cover.blob, { width: 240, height: 360, quality: 0.78 });
+      const cu = await fetch('/api/cover-upload', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ id: f.id, originalFilename: 'cover.' + cover.ext }),
+      });
+      const data = await cu.json().catch(() => ({}));
+      if (!cu.ok || !data.ok) throw new Error(data.message || `cover-upload ${cu.status}`);
+      const put = await putBlob(data.uploadUrl, cover.blob);
+      if (put < 200 || put >= 300) throw new Error('PUT ' + put);
+      if (data.uploadUrlSmall && small && small.blob) {
+        const ps = await putBlob(data.uploadUrlSmall, small.blob);
+        if (ps < 200 || ps >= 300) throw new Error('PUT small ' + ps);
+      }
+      made++;
+    } catch (e) {
+      failed++; console.warn('missing cover failed', f.id, e);
+      out.textContent = `${label} — falló: ${e.message}`;
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+  out.textContent = `Listo: ${made} portadas creadas, ${failed} fallos.`;
+  btn.disabled = false;
+  await loadAdminFiles();
 }
 
 // Re-encodes every cover as a resized WebP (JPEG where the browser cannot encode WebP) and
@@ -94,17 +170,10 @@ async function adminOptimizeCovers() {
       });
       const data = await cu.json().catch(() => ({}));
       if (!cu.ok || !data.ok) throw new Error(data.message || `cover-upload ${cu.status}`);
-      const putTo = (url, b) => new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', url); xhr.timeout = 120000;
-        xhr.setRequestHeader('Content-Type', b.type);
-        xhr.onload = () => resolve(xhr.status); xhr.onerror = () => reject(new Error('red')); xhr.ontimeout = () => reject(new Error('timeout'));
-        xhr.send(b);
-      });
-      const put = await putTo(data.uploadUrl, useLarge);
+      const put = await putBlob(data.uploadUrl, useLarge);
       if (put < 200 || put >= 300) throw new Error('PUT ' + put);
       if (data.uploadUrlSmall && smallVariant && smallVariant.blob) {
-        const ps = await putTo(data.uploadUrlSmall, smallVariant.blob);
+        const ps = await putBlob(data.uploadUrlSmall, smallVariant.blob);
         if (ps < 200 || ps >= 300) throw new Error('PUT small ' + ps);
       }
       replaced++; savedBytes += Math.max(0, original.size - useLarge.size);

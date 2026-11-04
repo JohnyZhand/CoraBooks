@@ -445,11 +445,85 @@
       try { task.destroy(); } catch (e) { /* ignore */ }
     }
   }
+  // Cover image of an EPUB (a File/Blob). Needs JSZip on the page. Reads the OPF manifest as
+  // XML, so attribute order does not matter, and tries in turn: the EPUB 3 cover-image
+  // property, the EPUB 2 <meta name="cover"> item, the guide's cover reference, manifest items
+  // or files named like a cover, and finally the first image of the first page in the spine.
+  async function extractEpubCover(source) {
+    if (!global.JSZip) return null;
+    let zip;
+    try { zip = await global.JSZip.loadAsync(source instanceof Blob ? await source.arrayBuffer() : source); }
+    catch (e) { console.warn('EPUB is not a readable zip', e); return null; }
+    const isImage = n => /\.(jpe?g|png|gif|webp)$/i.test(n || '');
+    const entry = path => { const f = zip.file(path); if (f) return f; const lc = path.toLowerCase(); const name = Object.keys(zip.files).find(k => k.toLowerCase() === lc); return name ? zip.file(name) : null; };
+    const resolve = (base, href) => {
+      const parts = (base ? base.split('/') : []);
+      for (const seg of decodeURIComponent(href.split('#')[0].split('?')[0]).replace(/\\/g, '/').split('/')) {
+        if (seg === '..') parts.pop(); else if (seg && seg !== '.') parts.push(seg);
+      }
+      return parts.join('/');
+    };
+    const typeOf = p => { const ext = p.split('.').pop().toLowerCase(); return ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/jpeg'; };
+    const blobOf = async (path) => { const f = entry(path); if (!f) return null; const data = await f.async('arraybuffer'); return data.byteLength ? new Blob([data], { type: typeOf(path) }) : null; };
+    const parseXml = async (path) => { const f = entry(path); if (!f) return null; const doc = new DOMParser().parseFromString(await f.async('text'), 'application/xml'); return doc.getElementsByTagName('parsererror').length ? null : doc; };
+    const firstImageIn = async (xhtmlPath) => {
+      const f = entry(xhtmlPath); if (!f) return null;
+      const html = await f.async('text');
+      const m = html.match(/<img[^>]+src=["']([^"']+)["']/i) || html.match(/<image[^>]+(?:xlink:)?href=["']([^"']+)["']/i);
+      if (!m) return null;
+      const p = resolve(xhtmlPath.split('/').slice(0, -1).join('/'), m[1]);
+      return isImage(p) ? blobOf(p) : null;
+    };
+    try {
+      let opfPath = null;
+      const container = await parseXml('META-INF/container.xml');
+      if (container) { const rf = container.getElementsByTagName('rootfile')[0]; if (rf) opfPath = rf.getAttribute('full-path'); }
+      if (!opfPath || !entry(opfPath)) opfPath = Object.keys(zip.files).find(p => /\.opf$/i.test(p)) || null;
+      if (opfPath) {
+        const opf = await parseXml(opfPath);
+        if (opf) {
+          const base = opfPath.split('/').slice(0, -1).join('/');
+          const items = Array.from(opf.getElementsByTagName('item'));
+          const byId = id => items.find(i => i.getAttribute('id') === id);
+          const imageItem = i => !!i && (/^image\//i.test(i.getAttribute('media-type') || '') || isImage(i.getAttribute('href')));
+          const fromItem = async (i) => {
+            if (!i || !i.getAttribute('href')) return null;
+            const p = resolve(base, i.getAttribute('href'));
+            return imageItem(i) ? blobOf(p) : firstImageIn(p);
+          };
+          // 1. EPUB 3: <item properties="cover-image">
+          let b = await fromItem(items.find(i => /(^|\s)cover-image(\s|$)/.test(i.getAttribute('properties') || '')));
+          if (b) return b;
+          // 2. EPUB 2: <meta name="cover" content="item-id"> (content may also be a file name)
+          const meta = Array.from(opf.getElementsByTagName('meta')).find(m => (m.getAttribute('name') || '').toLowerCase() === 'cover');
+          if (meta) {
+            const c = meta.getAttribute('content') || '';
+            b = await fromItem(byId(c)) || (isImage(c) ? await blobOf(resolve(base, c)) : null);
+            if (b) return b;
+          }
+          // 3. <guide><reference type="cover" href="cover.xhtml">
+          const ref = Array.from(opf.getElementsByTagName('reference')).find(r => (r.getAttribute('type') || '').toLowerCase() === 'cover');
+          if (ref && ref.getAttribute('href')) { const p = resolve(base, ref.getAttribute('href')); b = isImage(p) ? await blobOf(p) : await firstImageIn(p); if (b) return b; }
+          // 4. Manifest items named like a cover
+          b = await fromItem(items.find(i => imageItem(i) && /cover/i.test((i.getAttribute('id') || '') + ' ' + (i.getAttribute('href') || ''))));
+          if (b) return b;
+          // 5. First spine page (publishers often put the cover there)
+          const first = opf.getElementsByTagName('itemref')[0];
+          if (first) { const i = byId(first.getAttribute('idref')); if (i && i.getAttribute('href')) { b = await firstImageIn(resolve(base, i.getAttribute('href'))); if (b) return b; } }
+        }
+      }
+      // 6. Any image file named like a cover, shallowest path first
+      const named = Object.keys(zip.files).filter(p => isImage(p) && /cover/i.test(p)).sort((a, c) => a.split('/').length - c.split('/').length);
+      if (named.length) return blobOf(named[0]);
+    } catch (e) { console.warn('extractEpubCover failed', e); }
+    return null;
+  }
+
   function cleanPdfString(s) {
     if (!s || typeof s !== 'string') return '';
     const t = s.replace(/\s+/g, ' ').trim();
     return t.length > 2 && t.length < 200 ? t : '';
   }
 
-  global.CB = { parseFilename, titleCase, bookTitle, bookAuthor, bookFormat, isPdf, formatSize, formatDate, escapeHtml, languageName, lookupBook, readPdfInfo, encodeCover, coverUrl };
+  global.CB = { parseFilename, titleCase, bookTitle, bookAuthor, bookFormat, isPdf, formatSize, formatDate, escapeHtml, languageName, lookupBook, readPdfInfo, extractEpubCover, encodeCover, coverUrl };
 })(window);

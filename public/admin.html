@@ -63,6 +63,7 @@
               <button id="adminEnrichBtn" class="btn" type="button">Completar datos de todos</button>
               <button id="adminCorsBtn" class="btn" type="button">Configurar CORS de B2</button>
               <button id="adminCoversBtn" class="btn" type="button">Optimizar portadas</button>
+              <button id="adminMissingCoversBtn" class="btn" type="button">Generar portadas faltantes</button>
             </div>
             <div id="adminCleanupResult" class="progress-line"></div>
           </div>
@@ -87,6 +88,7 @@
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="/common.js"></script>
   <script src="/admin.js"></script>
 </body>

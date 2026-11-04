@@ -274,7 +274,7 @@ async function handleFileUpload(e) {
         await ensureUploadLibs();
         let raw = null;
         if (/\.pdf$/i.test(file.name) && window.pdfjsLib) { progressLabel.textContent = 'Generando portada…'; raw = await generatePdfThumbnail(file, 720); }
-        else if (/\.epub$/i.test(file.name) && window.JSZip) { progressLabel.textContent = 'Extrayendo portada del EPUB…'; raw = await extractEpubCover(file); }
+        else if (/\.epub$/i.test(file.name) && window.JSZip) { progressLabel.textContent = 'Extrayendo portada del EPUB…'; raw = await CB.extractEpubCover(file); }
         if (raw) cover = await CB.encodeCover(raw); // resized + WebP when possible
       }
       if (cover && cover.blob) {
@@ -359,32 +359,6 @@ async function generatePdfThumbnail(file, maxDimension = 400) {
     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
     return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
   } catch (err) { console.warn('PDF thumbnail generation failed:', err); return null; }
-}
-
-// Cover image from an EPUB (file named *cover* or the one referenced in content.opf)
-async function extractEpubCover(epubFile) {
-  try {
-    if (!window.JSZip) return null;
-    const zip = await JSZip.loadAsync(await epubFile.arrayBuffer());
-    const imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    const candidates = [];
-    zip.forEach((path) => { const l = path.toLowerCase(); if (imageExt.some(x => l.endsWith('.' + x)) && l.includes('cover')) candidates.push(path); });
-    if (candidates.length) { candidates.sort((a, b) => a.split('/').length - b.split('/').length); return await zip.file(candidates[0]).async('blob'); }
-    const opfPath = Object.keys(zip.files).find(p => p.toLowerCase().endsWith('.opf'));
-    if (opfPath) {
-      const opf = await zip.file(opfPath).async('text');
-      const coverId = opf.match(/<meta[^>]+name=["']cover["'][^>]*content=["']([^"']+)["']/i);
-      if (coverId) {
-        const item = opf.match(new RegExp(`<item[^>]+id=["']${coverId[1]}["'][^>]*href=["']([^"']+)["']`, 'i'));
-        if (item) {
-          const baseDir = opfPath.split('/').slice(0, -1).join('/');
-          const full = (baseDir ? `${baseDir}/${item[1]}` : item[1]).replace(/\\/g, '/');
-          if (zip.file(full)) return await zip.file(full).async('blob');
-        }
-      }
-    }
-  } catch (err) { console.warn('extractEpubCover failed', err); }
-  return null;
 }
 
 // ----- Notifications -----
