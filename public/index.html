@@ -64,6 +64,16 @@
 
           <div class="toolbar">
             <label class="search"><span>[ buscar ]</span><input id="searchInput" type="search" placeholder="título, autor, materia…" autocomplete="off" /></label>
+            <label class="sort"><span>[ ordenar ]</span>
+              <select id="sortSelect" aria-label="Ordenar libros">
+                <option value="newest">Más recientes</option>
+                <option value="oldest">Más antiguos</option>
+                <option value="az">Título A → Z</option>
+                <option value="za">Título Z → A</option>
+                <option value="biggest">Tamaño: mayor primero</option>
+                <option value="smallest">Tamaño: menor primero</option>
+              </select>
+            </label>
             <span class="count" id="resultCount"></span>
           </div>
           <p class="note">Los libros grandes pueden tardar un rato en abrir después de descargarlos.</p>

@@ -208,6 +208,16 @@ img { max-width: 100%; display: block; }
 }
 .search input:focus { border-color: var(--acc); box-shadow: 0 0 10px var(--glow-soft); }
 .search input::placeholder { color: var(--dim); }
+.sort { display: flex; align-items: center; gap: 10px; flex: 0 1 auto; }
+.sort span { color: var(--acc); font-size: 12px; letter-spacing: 0.12em; white-space: nowrap; }
+.sort select {
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+    background: var(--bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23a78bfa' stroke-width='1.5'/></svg>") no-repeat right 10px center;
+    border: 1px solid var(--line); padding: 8px 28px 8px 10px; color: var(--text); outline: none;
+    font-size: 13px; min-width: 0;
+}
+.sort select:focus { border-color: var(--acc); box-shadow: 0 0 10px var(--glow-soft); }
+.sort select option { background: var(--bg); color: var(--text); }
 .count { color: var(--dim); font-size: 12px; letter-spacing: 0.1em; margin-left: auto; white-space: nowrap; }
 .note { color: var(--dim); font-size: 12px; text-align: center; margin: 0 auto 22px; max-width: 760px; line-height: 1.6; }
 
@@ -475,6 +485,9 @@ img { max-width: 100%; display: block; }
     .toolbar { padding: 8px 10px; margin: 4px 0 10px; gap: 8px; }
     .search span { font-size: 11px; }
     .search input { padding: 7px 9px; font-size: 13px; }
+    .sort { flex: 1 1 100%; }
+    .sort span { font-size: 11px; }
+    .sort select { flex: 1; padding: 7px 26px 7px 9px; font-size: 13px; }
     .count { display: none; }
     .note { font-size: 11px; margin-bottom: 14px; line-height: 1.5; }
     .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; margin-top: 4px; }

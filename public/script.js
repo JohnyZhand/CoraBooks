@@ -46,6 +46,14 @@ function setupEventListeners() {
   if (resetBtn) resetBtn.addEventListener('click', () => { pendingMeta = null; pendingCover = null; hideMetaPreview(); });
   const search = document.getElementById('searchInput');
   if (search) search.addEventListener('input', () => renderShelf());
+  const sort = document.getElementById('sortSelect');
+  if (sort) {
+    try { const saved = localStorage.getItem('shelf:sort'); if (saved && sort.querySelector(`option[value="${saved}"]`)) sort.value = saved; } catch (e) { /* ignore */ }
+    sort.addEventListener('change', () => {
+      try { localStorage.setItem('shelf:sort', sort.value); } catch (e) { /* ignore */ }
+      renderShelf();
+    });
+  }
 }
 
 // ----- Navigation -----
@@ -93,12 +101,27 @@ function searchText(file) {
     .filter(Boolean).join(' ').toLowerCase();
 }
 
+// Sort orders offered in the toolbar. Ties fall back to title so the order is stable.
+const SORTERS = {
+  newest: (a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt),
+  oldest: (a, b) => new Date(a.uploadedAt) - new Date(b.uploadedAt),
+  az: (a, b) => CB.bookTitle(a).localeCompare(CB.bookTitle(b), 'es', { sensitivity: 'base', numeric: true }),
+  za: (a, b) => CB.bookTitle(b).localeCompare(CB.bookTitle(a), 'es', { sensitivity: 'base', numeric: true }),
+  biggest: (a, b) => (b.size || 0) - (a.size || 0),
+  smallest: (a, b) => (a.size || 0) - (b.size || 0),
+};
+function sortFiles(list) {
+  const key = document.getElementById('sortSelect')?.value || 'newest';
+  const primary = SORTERS[key] || SORTERS.newest;
+  return list.slice().sort((a, b) => primary(a, b) || SORTERS.az(a, b));
+}
+
 function renderShelf() {
   const list = document.getElementById('files-list');
   if (!list) return;
   const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
   const terms = q.split(/\s+/).filter(Boolean);
-  const shown = terms.length ? files.filter(f => { const t = searchText(f); return terms.every(term => t.includes(term)); }) : files;
+  const shown = sortFiles(terms.length ? files.filter(f => { const t = searchText(f); return terms.every(term => t.includes(term)); }) : files);
 
   const count = document.getElementById('resultCount');
   if (count) count.textContent = terms.length ? `${shown.length} / ${files.length} libros` : `${files.length} libros`;
@@ -217,7 +240,7 @@ async function handleFileUpload(e) {
   progressContainer.querySelector('.file-name').textContent = file.name;
   progressContainer.querySelector('.file-size').textContent = CB.formatSize(file.size);
   progressContainer.classList.remove('hidden');
-  progressLabel.textContent = 'Pidiendo URL de subida…';
+  progressLabel.textContent = 'Preparando la subida…';
   progressPercentage.textContent = '0%';
   progressFill.style.width = '0%';
   const submitBtn = document.getElementById('uploadBtn');
@@ -233,7 +256,7 @@ async function handleFileUpload(e) {
     if (!uploadResponse.ok) { const err = await uploadResponse.json().catch(() => ({})); throw new Error(err.message || 'No se pudo pedir la URL de subida'); }
     const { uploadUrl, fileName: b2FileName, fileId } = await uploadResponse.json();
     progressFill.style.width = '10%'; progressPercentage.textContent = '10%';
-    progressLabel.textContent = 'Subiendo a Backblaze B2…';
+    progressLabel.textContent = 'Subiendo a la base de datos…';
 
     const uploadResult = await uploadPresigned(uploadUrl, file, (p) => {
       const pct = Math.round(10 + p * 0.8);
