@@ -38,6 +38,7 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
+    overscroll-behavior-x: none; /* no sideways rubber-banding on phones */
     background-image:
         radial-gradient(ellipse 60% 40% at 50% -10%, rgba(139, 92, 246, 0.22), transparent 70%),
         linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
@@ -466,7 +467,9 @@ img { max-width: 100%; display: block; }
     .sysline .dot { width: 6px; height: 6px; }
     .sys-long { display: none; }
     .sys-short { display: inline; }
-    .nav { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; border-top: 1px solid var(--line); margin: 0 -14px; width: calc(100% + 28px); }
+    /* The bar's own side padding is 0 here, so the nav already spans edge to edge: no negative
+       margins (they made the page 28px wider than the phone and let it pan sideways) */
+    .nav { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
     .nav-btn { padding: 10px 2px; font-size: 10px; letter-spacing: 0.1em; border: 0; border-bottom: 2px solid transparent; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .nav-btn::before, .nav-btn::after { content: none; }
     .nav-btn.active { background: transparent; border-bottom-color: var(--acc); }

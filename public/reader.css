@@ -129,4 +129,14 @@ body {
 @media (max-width: 640px) {
   .rselect { max-width: 120px; font-size: .75rem; }
   .rfoot { font-size: .65rem; }
+  /* EPUB toolbar on phones: two rows (library/ficha/title/download, then chapter + text controls)
+     so nothing is pushed past the right edge of the screen */
+  .epub-body { --toolbar-h: 97px; } /* 2 rows of 36px + paddings + 2 row gaps + border */
+  .epub-body .rtoolbar { flex-wrap: wrap; height: auto; min-height: var(--toolbar-h); padding: 6px .5rem; row-gap: 6px; }
+  .epub-body .rtitle { flex: 1 1 0; }
+  .epub-body .rtoolbar::after { content: ''; flex-basis: 100%; height: 0; order: 0; }
+  .epub-body .rpager, .epub-body .rzoom { order: 1; }
+  .epub-body .rpager { flex: 1 1 auto; min-width: 0; }
+  .epub-body .rselect { flex: 1 1 auto; min-width: 0; max-width: none; }
+  .epub-body .rzoom { margin-left: auto; }
 }
